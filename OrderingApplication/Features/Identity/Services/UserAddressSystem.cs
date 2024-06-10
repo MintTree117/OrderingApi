@@ -4,9 +4,9 @@ using OrderingDomain.Optionals;
 using OrderingInfrastructure;
 using OrderingInfrastructure.Features.Identity.Repositories;
 
-namespace OrderingApplication.Features.Identity.Services.Account;
+namespace OrderingApplication.Features.Identity.Services;
 
-internal sealed class AddressSystem( IIdentityAddressRepository addressRepository )
+internal sealed class UserAddressSystem( IIdentityAddressRepository addressRepository )
 {
     readonly IIdentityAddressRepository repo = addressRepository;
 

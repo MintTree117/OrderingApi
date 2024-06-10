@@ -1,36 +1,19 @@
 using Microsoft.AspNetCore.Identity;
-using OrderingApplication.Features.Identity.Services.Account;
 using OrderingApplication.Features.Identity.Types.Login;
 using OrderingApplication.Features.Identity.Types.Tokens;
 using OrderingApplication.Features.Identity.Utilities;
 using OrderingDomain.Identity;
 using OrderingDomain.Optionals;
 
-namespace OrderingApplication.Features.Identity.Services.Authentication;
+namespace OrderingApplication.Features.Identity.Services;
 
-internal sealed class LoginRefreshSystem( IdentityConfigCache configCache, RevokedTokenCache revoked, UserManager<UserAccount> userManager )
+internal sealed class LoginRefreshSystem( IdentityConfigCache configCache, RevokedTokenCache revoked, UserManager<UserAccount> userManager, ILogger<LoginRefreshSystem> logger )
 {
     readonly JwtConfig _jwtConfig = configCache.JwtConfigRules;
     readonly RevokedTokenCache _revoked = revoked;
     readonly UserManager<UserAccount> _userManager = userManager;
-
-    internal async Task<Reply<bool>> CheckLogin( string accessToken )
-    {
-        Reply<TokenMeta> metaReply = IdentityTokenUtils.ParseTokenMeta( accessToken, _jwtConfig );
-        if (!metaReply.IsSuccess)
-            return IReply.None( "Invalid Token." );
-
-        if (_revoked.IsTokenRevoked( metaReply.Data.TokenId ))
-            return IReply.None( "Invalid Token." );
-
-        if (DateTime.UtcNow > metaReply.Data.ExpiryDate)
-            return IReply.None( "Session Has Expired." );
-        
-        Reply<UserAccount> userReply = await _userManager.FindById( metaReply.Data.UserId );
-        return userReply.IsSuccess
-            ? IReply.Okay()
-            : IReply.None( "User not found." );
-    } 
+    readonly ILogger<LoginRefreshSystem> _logger = logger;
+    
     internal async Task<Reply<LoginRefreshReply>> LoginRefresh( LoginRefreshRequest request )
     {
         // Revoke old access token if exists
@@ -44,7 +27,7 @@ internal sealed class LoginRefreshSystem( IdentityConfigCache configCache, Revok
         
         // Check expiry
         if (DateTime.UtcNow > metaReply.Data.ExpiryDate)
-            return Reply<LoginRefreshReply>.None( "Session Has Expired." );
+            TokenInvalid( IReply.None( "Expired Refresh Token." ) );
         
         // Return a new access token if the refresh isn't revoked
         return _revoked.IsTokenRevoked( metaReply.Data.TokenId )

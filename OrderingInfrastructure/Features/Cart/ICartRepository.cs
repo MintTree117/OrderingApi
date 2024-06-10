@@ -1,4 +1,4 @@
-using CartDomain.Cart;
+using OrderingDomain.Cart;
 using OrderingDomain.Optionals;
 
 namespace OrderingInfrastructure.Features.Cart;

@@ -4,10 +4,8 @@ using OrderingDomain.ValueTypes;
 namespace OrderingApplication.Features.Identity.Types.Addresses;
 
 internal readonly record struct AddressDto(
-    Guid Id,
+    Guid? Id,
     bool IsPrimary,
-    string Country,
-    string City,
     int GridX,
     int GridY )
 {
@@ -18,7 +16,7 @@ internal readonly record struct AddressDto(
         return dtos;
     }
     internal static AddressDto FromModel( UserAddress model ) =>
-        new( model.Id, model.IsPrimary, model.Address.Country, model.Address.City, model.Address.GridX, model.Address.GridY );
+        new( model.Id, model.IsPrimary, model.Address.GridX, model.Address.GridY );
     internal UserAddress ToModel( string identityId ) =>
-        new( Id, identityId, new Address( Country, City, GridX, GridY ), IsPrimary );
+        new( Id ?? Guid.Empty, identityId, new Address( GridX, GridY ), IsPrimary );
 }

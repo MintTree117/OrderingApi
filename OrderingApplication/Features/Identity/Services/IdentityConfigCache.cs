@@ -1,11 +1,11 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.IdentityModel.Tokens;
+using OrderingApplication.Extentions;
 using OrderingApplication.Features.Identity.Types.Password;
 using OrderingApplication.Features.Identity.Types.Tokens;
-using OrderingApplication.Extentions;
 
-namespace OrderingApplication.Features.Identity.Services.Account;
+namespace OrderingApplication.Features.Identity.Services;
 
 internal sealed class IdentityConfigCache( IConfiguration configuration )
 {

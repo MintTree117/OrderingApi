@@ -1,9 +1,8 @@
-using OrderingApplication.Features.Identity.Services.Account;
 using OrderingApplication.Features.Identity.Types.Tokens;
 using OrderingDomain.Optionals;
 using OrderingInfrastructure.Http;
 
-namespace OrderingApplication.Features.Identity.Services.Authentication;
+namespace OrderingApplication.Features.Identity.Services;
 
 internal sealed class RevokedTokenBroadcaster
 {

@@ -1,4 +1,4 @@
 namespace OrderingApplication.Features.Identity.Types.Accounts;
 
-internal readonly record struct DeleteAccountRequest(
+internal readonly record struct DeleteProfileRequest(
     string Password );

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using OrderingApplication.Features.Identity.Services.Account;
 using OrderingApplication.Features.Identity.Types.Login;
 using OrderingApplication.Features.Identity.Types.Tokens;
 using OrderingApplication.Features.Identity.Utilities;
@@ -7,7 +6,7 @@ using OrderingDomain.Identity;
 using OrderingDomain.Optionals;
 using OrderingInfrastructure.Email;
 
-namespace OrderingApplication.Features.Identity.Services.Authentication;
+namespace OrderingApplication.Features.Identity.Services;
 
 internal sealed class LoginSystem( IdentityConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender )
 {
@@ -67,17 +66,17 @@ internal sealed class LoginSystem( IdentityConfigCache configCache, UserManager<
     }
     async Task<Reply<LoginReply>> HandleRequires2Fa( Reply<UserAccount> user )
     {
-        bool generated2FA =
-            (await Set2FaToken( user.Data, _userManager )).Succeeds( out var problem ) &&
+        bool generated2Fa =
+            (await Set2FaToken( user.Data, _userManager )).Succeeds( out Reply<bool> problem ) &&
             (await Send2FaEmail( user.Data, _emailSender )).Succeeds( out problem );
 
-        return generated2FA
+        return generated2Fa
             ? Reply<LoginReply>.With( LoginReply.Pending2FA() )
             : Reply<LoginReply>.None( problem );
     }
     async Task<Reply<bool>> Send2FaEmail( UserAccount user, IEmailSender email )
     {
-        const string Header = "Verify your login";
+        const string header = "Verify your login";
         string code = IdentityValidationUtils.Encode( await _userManager.GenerateTwoFactorTokenAsync( user, "Email" ) );
         string body = $@"
             <!DOCTYPE html>
@@ -85,11 +84,11 @@ internal sealed class LoginSystem( IdentityConfigCache configCache, UserManager<
             <head>
                 <meta charset='UTF-8'>
                 <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-                <title>{Header}</title>
+                <title>{header}</title>
             </head>
             <body style='font-family: Arial, sans-serif;'>
                 <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
-                    <h2 style='color: #333;'>{Header}</h2>
+                    <h2 style='color: #333;'>{header}</h2>
                     <p>Dear {user.UserName},</p>
                     <p>Your two-factor verification code is:</p>
                     <p style='font-size: 24px; font-weight: bold;'>{code}</p>
@@ -99,7 +98,7 @@ internal sealed class LoginSystem( IdentityConfigCache configCache, UserManager<
             </body>
             </html>";
         
-        return email.SendHtmlEmail( user.Email ?? string.Empty, Header, body );
+        return email.SendHtmlEmail( user.Email ?? string.Empty, header, body );
     }
     Reply<LoginReply> HandleNormalLogin( Reply<UserAccount> user )
     {

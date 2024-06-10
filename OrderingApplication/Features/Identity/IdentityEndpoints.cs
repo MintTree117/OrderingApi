@@ -1,110 +1,100 @@
 using Microsoft.AspNetCore.Mvc;
-using OrderingApplication.Features.Identity.Services.Account;
-using OrderingApplication.Features.Identity.Services.Authentication;
 using OrderingApplication.Features.Identity.Types.Accounts;
 using OrderingApplication.Features.Identity.Types.Addresses;
 using OrderingApplication.Features.Identity.Types.Login;
 using OrderingApplication.Features.Identity.Types.Password;
 using OrderingApplication.Features.Identity.Types.Registration;
 using OrderingApplication.Extentions;
-using LoginRequest = OrderingApplication.Features.Identity.Types.Login.LoginRequest;
-using RegisterRequest = OrderingApplication.Features.Identity.Types.Registration.RegisterRequest;
-using TwoFactorRequest = OrderingApplication.Features.Identity.Types.Login.TwoFactorRequest;
+using OrderingApplication.Features.Identity.Services;
 
 namespace OrderingApplication.Features.Identity;
-
-using LoginRequest = Types.Login.LoginRequest;
-using RegisterRequest = Types.Registration.RegisterRequest;
-using TwoFactorRequest = Types.Login.TwoFactorRequest;
 
 internal static class IdentityEndpoints
 {
     internal static void MapIdentityEndpoints( this IEndpointRouteBuilder app )
     {
-        // Authentication
-        app.MapGet( "api/identity/check",
-            async ( [FromQuery] string accessToken, LoginRefreshSystem system ) =>
-            (await system.CheckLogin( accessToken ))
-            .GetIResult() );
-        app.MapPost( "api/identity/login",
-            async ( [FromBody] LoginRequest request, LoginSystem system ) =>
+        // EMAIL CONFIRMATION
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapPost( "api/identity/email/resend", static async ( [FromBody] string email, EmailConfirmationSystem system ) =>
+        (await system.SendConfirmationLink( email ))
+        .GetIResult() );
+        app.MapPut( "api/identity/email/confirm", static async ( [FromBody] ConfirmEmailRequest request, EmailConfirmationSystem system ) =>
+        (await system.ConfirmEmail( request ))
+        .GetIResult() );
+
+        // LOGIN RECOVERY
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapPost( "api/identity/password/forgot", static async ( [FromBody] ForgotPasswordRequest request, LoginRecoverySystem system ) =>
+        (await system.ForgotPassword( request ))
+        .GetIResult() );
+        app.MapPost( "api/identity/password/reset", static async ( [FromBody] ResetPasswordRequest request, LoginRecoverySystem system ) =>
+        (await system.ResetPassword( request ))
+        .GetIResult() );
+        
+        // LOGIN
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapPost( "api/identity/login", static async ( [FromBody] LoginRequest request, LoginSystem system ) =>
             (await system.Login( request ))
             .GetIResult() );
-        app.MapPost( "api/identity/2fa",
-            async ( [FromBody] TwoFactorRequest request, LoginSystem system ) =>
+        app.MapPost( "api/identity/login2Fa", static async ( [FromBody] TwoFactorRequest request, LoginSystem system ) =>
             (await system.Login2Factor( request ))
             .GetIResult() );
-        app.MapPost( "api/identity/refresh",
-            async ( [FromBody] LoginRefreshRequest request, LoginRefreshSystem system ) =>
+
+        // LOGIN REFRESH
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapPost( "api/identity/refresh", static async ( [FromBody] LoginRefreshRequest request, LoginRefreshSystem system ) =>
             (await system.LoginRefresh( request ))
             .GetIResult() );
-        app.MapPost( "api/identity/refresh-full",
-            async ( [FromBody] LoginRefreshRequest request, LoginRefreshSystem system ) =>
+        app.MapPost( "api/identity/refreshFull", static async ( [FromBody] LoginRefreshRequest request, LoginRefreshSystem system ) =>
             (await system.LoginRefreshFull( request ))
             .GetIResult() );
-        app.MapPost( "api/identity/logout",
-            async ( [FromBody] string refreshToken, HttpContext http, LogoutSystem system ) =>
+
+        // LOGOUT
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapPost( "api/identity/logout", static async ( [FromBody] string refreshToken, HttpContext http, LogoutSystem system ) =>
             (await system.Logout( http.User, refreshToken ))
             .GetIResult() ).RequireAuthorization();
 
-        // Register
-        app.MapPost( "api/identity/register",
-            async ( [FromBody] RegisterRequest request, RegistrationSystem system ) =>
+        // REGISTRATION
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapPost( "api/identity/register", static async ( [FromBody] RegisterRequest request, RegistrationSystem system ) =>
             (await system.RegisterIdentity( request ))
             .GetIResult() );
-        app.MapPut( "api/identity/email/confirm",
-            async ( [FromBody] ConfirmEmailRequest request, RegistrationSystem system ) =>
-            (await system.ConfirmEmail( request ))
-            .GetIResult() );
-        app.MapPost( "api/identity/email/resend",
-            async ( [FromBody] ConfirmResendRequest request, RegistrationSystem system ) =>
-            (await system.ResendConfirmLink( request ))
-            .GetIResult() );
+
+        // USER ADDRESSES
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapGet( "api/account/address/view", static async ( [FromQuery] int page, [FromQuery] int pageSize, HttpContext http, UserAddressSystem system ) =>
+            (await system.ViewAddresses( http.UserId(), new ViewAddressesRequest( page, pageSize ) ))
+            .GetIResult() ).RequireAuthorization();
+        app.MapPut( "api/account/address/add", static async ( [FromBody] AddressDto request, HttpContext http, UserAddressSystem system ) =>
+            (await system.AddAddress( http.UserId(), request ))
+            .GetIResult() ).RequireAuthorization();
+        app.MapPost( "api/account/address/update", static async ( [FromBody] AddressDto request, HttpContext http, UserAddressSystem system ) =>
+            (await system.UpdateAddress( http.UserId(), request ))
+            .GetIResult() ).RequireAuthorization();
+        app.MapDelete( "api/account/address/delete", static async ( [FromQuery] Guid addressId, HttpContext http, UserAddressSystem system ) =>
+            (await system.DeleteAddress( http.UserId(), addressId ))
+            .GetIResult() ).RequireAuthorization();
         
-        // Manage Account
-        app.MapGet( "api/identity/account/view",
-            async ( HttpContext http, ProfileSystem system ) =>
+        // USER PROFILE
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapGet( "api/account/profile/view", static async ( HttpContext http, UserProfileSystem system ) =>
             (await system.ViewIdentity( http.UserId() ))
             .GetIResult() ).RequireAuthorization();
-        app.MapPost( "api/identity/account/update",
-            async ( [FromBody] UpdateAccountRequest request, HttpContext http, ProfileSystem system ) =>
+        app.MapPost( "api/account/profile/update", static async ( [FromBody] UpdateProfileRequest request, HttpContext http, UserProfileSystem system ) =>
             (await system.UpdateAccount( http.UserId(), request ))
             .GetIResult() ).RequireAuthorization();
-        app.MapPost( "api/identity/account/delete",
-            async ( [FromBody] DeleteAccountRequest request, HttpContext http, ProfileSystem system ) =>
+        app.MapPost( "api/account/profile/delete", static async ( [FromBody] DeleteProfileRequest request, HttpContext http, UserProfileSystem system ) =>
             (await system.DeleteIdentity( http.UserId(), request ))
             .GetIResult() ).RequireAuthorization();
 
-        // Password
-        app.MapPost( "api/identity/password/update",
-            async ( [FromBody] UpdatePasswordRequest request, HttpContext http, PasswordSystem system ) =>
-            (await system.ManagePassword( http.UserId(), request ))
+        // USER SECURITY
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        app.MapPost( "api/account/password/update", static async ( [FromBody] UpdatePasswordRequest request, HttpContext http, UserSecuritySystem system ) =>
+            (await system.UpdatePassword( http.UserId(), request ))
             .GetIResult() ).RequireAuthorization();
-        app.MapPost( "api/identity/password/forgot",
-            async ( [FromBody] ForgotPasswordRequest request, PasswordSystem system ) =>
-                (await system.ForgotPassword( request ))
-                .GetIResult() );
-        app.MapPost( "api/identity/password/reset",
-            async ( [FromBody] ResetPasswordRequest request, PasswordSystem system ) =>
-            (await system.ResetPassword( request ))
-            .GetIResult() );
-
-        // Manage Addresses
-        app.MapGet( "api/identity/address/view",
-            async ( [FromQuery] int page, [FromQuery] int rows, HttpContext http, AddressSystem system ) =>
-            (await system.ViewAddresses( http.UserId(), new ViewAddressesRequest( page, rows ) ))
-            .GetIResult() ).RequireAuthorization();
-        app.MapPut( "api/identity/address/add",
-            async ( [FromBody] AddressDto request, HttpContext http, AddressSystem system ) =>
-            (await system.AddAddress( http.UserId(), request ))
-            .GetIResult() ).RequireAuthorization();
-        app.MapPost( "api/identity/address/update",
-            async ( [FromBody] AddressDto request, HttpContext http, AddressSystem system ) =>
-            (await system.UpdateAddress( http.UserId(), request ))
-            .GetIResult() ).RequireAuthorization();
-        app.MapDelete( "api/identity/address/delete",
-            async ( [FromQuery] Guid addressId, HttpContext http, AddressSystem system ) =>
-            (await system.DeleteAddress( http.UserId(), addressId ))
+        app.MapPost( "api/account/2fa/update", static async ( [FromBody] bool enabledTwoFactor, HttpContext http, UserSecuritySystem system ) =>
+            (await system.UpdateTwoFactor( http.UserId(), enabledTwoFactor ))
             .GetIResult() ).RequireAuthorization();
     }
 }

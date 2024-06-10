@@ -1,6 +1,6 @@
 using System.Data;
-using CartDomain.Cart;
 using Dapper;
+using OrderingDomain.Cart;
 using OrderingDomain.Optionals;
 
 namespace OrderingInfrastructure.Features.Cart;

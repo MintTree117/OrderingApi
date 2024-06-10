@@ -5,27 +5,27 @@ using OrderingDomain.Identity;
 using OrderingDomain.Optionals;
 using OrderingInfrastructure.Email;
 
-namespace OrderingApplication.Features.Identity.Services.Account;
+namespace OrderingApplication.Features.Identity.Services;
 
-internal sealed class ProfileSystem( IdentityConfigCache configCache, UserManager<UserAccount> users, IEmailSender emailSender )
+internal sealed class UserProfileSystem( IdentityConfigCache configCache, UserManager<UserAccount> users, IEmailSender emailSender )
 {
     readonly IdentityConfigCache _configCache = configCache;
     readonly UserManager<UserAccount> _users = users;
     readonly IEmailSender _emailSender = emailSender;
     
     // VIEW
-    internal async Task<Reply<ViewAccountReply>> ViewIdentity( string userId ) =>
+    internal async Task<Reply<ViewProfileReply>> ViewIdentity( string userId ) =>
         (await _users.FindById( userId ))
         .Succeeds( out Reply<UserAccount> findById )
             ? ViewSuccess( findById.Data )
             : ViewFailure( findById );
-    static Reply<ViewAccountReply> ViewSuccess( UserAccount user ) =>
-        Reply<ViewAccountReply>.With( ViewAccountReply.With( user ) );
-    static Reply<ViewAccountReply> ViewFailure( IReply result ) =>
-        Reply<ViewAccountReply>.None( result );
+    static Reply<ViewProfileReply> ViewSuccess( UserAccount user ) =>
+        Reply<ViewProfileReply>.With( ViewProfileReply.With( user ) );
+    static Reply<ViewProfileReply> ViewFailure( IReply result ) =>
+        Reply<ViewProfileReply>.None( result );
     
     // UPDATE
-    internal async Task<Reply<bool>> UpdateAccount( string userId, UpdateAccountRequest update )
+    internal async Task<Reply<bool>> UpdateAccount( string userId, UpdateProfileRequest update )
     {
         if ((await _users.FindById( userId )).Fails( out var user ))
             return IReply.None( "User not found." );
@@ -38,13 +38,13 @@ internal sealed class ProfileSystem( IdentityConfigCache configCache, UserManage
                 ? IReply.Okay()
                 : IReply.None( $"Failed to save changes to account. {updateResult.CombineErrors()}" );
     }
-    Reply<bool> ValidateUpdate( UserAccount user, UpdateAccountRequest update ) =>
+    Reply<bool> ValidateUpdate( UserAccount user, UpdateProfileRequest update ) =>
         UpdateEmail( user, update.Email ).Succeeds( out var managedResult ) &&
         UpdatePhone( user, update.Phone ).Succeeds( out managedResult ) &&
-        UpdateUsername( user, update.Username ).Succeeds( out managedResult ) &&
-        UpdateTwoFactor( user, update.HasTwoFactor ).Succeeds( out managedResult )
+        UpdateUsername( user, update.Username ).Succeeds( out managedResult )
             ? IReply.Okay()
             : IReply.None( managedResult );
+
     Reply<bool> UpdateEmail( UserAccount user, string newEmail )
     {
         if (!IdentityValidationUtils.ValidateEmail( newEmail, _configCache.EmailRules ).Succeeds( out var result ))
@@ -69,14 +69,9 @@ internal sealed class ProfileSystem( IdentityConfigCache configCache, UserManage
         user.UserName = newUsername;
         return IReply.Okay();
     }
-    Reply<bool> UpdateTwoFactor( UserAccount user, bool enable )
-    {
-        user.TwoFactorEnabled = enable;
-        return IReply.Okay();
-    }
     
     // DELETE
-    internal async Task<Reply<bool>> DeleteIdentity( string userId, DeleteAccountRequest request )
+    internal async Task<Reply<bool>> DeleteIdentity( string userId, DeleteProfileRequest request )
     {
         if ((await _users.FindById( userId )).Fails( out var user ))
             return IReply.None( user );

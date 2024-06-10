@@ -1,4 +1,4 @@
-namespace CartDomain.Cart;
+namespace OrderingDomain.Cart;
 
 public sealed class CartItem
 {

@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
 
-namespace OrderingApplication.Features.Identity.Services.Authentication;
+namespace OrderingApplication.Features.Identity.Services;
 
 internal sealed class RevokedTokenMiddleware( RequestDelegate next, ILogger<RevokedTokenMiddleware> logger, RevokedTokenCache revokedTokenCache )
 {

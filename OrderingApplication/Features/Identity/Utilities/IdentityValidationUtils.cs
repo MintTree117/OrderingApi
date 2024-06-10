@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.WebUtilities;
-using OrderingApplication.Features.Identity.Services.Account;
 using OrderingApplication.Features.Identity.Types.Password;
 using OrderingApplication.Features.Identity.Types.Registration;
 using OrderingApplication.Features.Identity.Services;

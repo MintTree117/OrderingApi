@@ -1,11 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using OrderingApplication.Features.Identity.Services.Account;
 using OrderingApplication.Features.Identity.Types.Tokens;
 using OrderingApplication.Features.Identity.Utilities;
 using OrderingDomain.Optionals;
 
-namespace OrderingApplication.Features.Identity.Services.Authentication;
+namespace OrderingApplication.Features.Identity.Services;
 
 internal sealed class LogoutSystem( IdentityConfigCache config, RevokedTokenCache revoked )
 {

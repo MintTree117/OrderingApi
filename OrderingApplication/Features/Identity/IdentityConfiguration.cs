@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using OrderingApplication.Features.Identity.Services.Account;
-using OrderingApplication.Features.Identity.Services.Authentication;
+using OrderingApplication.Features.Identity.Services;
 using OrderingDomain.Identity;
 using OrderingInfrastructure.Features.Identity;
 
@@ -30,9 +29,9 @@ internal static class IdentityConfiguration
         builder.Services.AddScoped<LoginRefreshSystem>();
         builder.Services.AddScoped<LogoutSystem>();
         builder.Services.AddScoped<RegistrationSystem>();
-        builder.Services.AddScoped<ProfileSystem>();
-        builder.Services.AddScoped<PasswordSystem>();
-        builder.Services.AddScoped<AddressSystem>();
+        builder.Services.AddScoped<UserProfileSystem>();
+        builder.Services.AddScoped<UserSecuritySystem>();
+        builder.Services.AddScoped<UserAddressSystem>();
     }
     internal static void AddIdentityMiddleware( this WebApplication app )
     {

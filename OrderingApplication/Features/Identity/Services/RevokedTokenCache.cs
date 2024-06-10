@@ -1,7 +1,7 @@
 using OrderingApplication.Features.Identity.Types.Tokens;
 using OrderingDomain.Optionals;
 
-namespace OrderingApplication.Features.Identity.Services.Authentication;
+namespace OrderingApplication.Features.Identity.Services;
 
 internal sealed class RevokedTokenCache
 {
