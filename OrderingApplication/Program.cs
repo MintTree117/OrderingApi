@@ -16,5 +16,4 @@ app.MapEndpoints();
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthorization();
-app.AddCustomMiddleware();
 app.Run();

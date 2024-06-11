@@ -1,9 +1,16 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
-using OrderingApplication.Features.Identity.Services;
+using OrderingApplication.Features.Identity.AccountAddresses;
+using OrderingApplication.Features.Identity.AccountDetails;
+using OrderingApplication.Features.Identity.AccountSecurity;
+using OrderingApplication.Features.Identity.Login.Services;
+using OrderingApplication.Features.Identity.Registration;
+using OrderingApplication.Features.Identity.Registration.Systems;
 using OrderingDomain.Identity;
 using OrderingInfrastructure.Features.Identity;
 
@@ -19,23 +26,16 @@ internal static class IdentityConfiguration
                .AddDefaultTokenProviders();
         builder.Services
                .AddAuthentication( GetAuthenticationOptions )
+               .AddCookie( GetCookieOptions )
                .AddJwtBearer( options => GetJwtOptions( options, builder ) );
         builder.Services
-               .AddAuthorization();
+               .AddAuthorization( GetAuthorizationOptions );
         builder.Services.AddSingleton<IdentityConfigCache>();
-        builder.Services.AddSingleton<RevokedTokenBroadcaster>();
-        builder.Services.AddSingleton<RevokedTokenCache>();
         builder.Services.AddScoped<LoginSystem>();
-        builder.Services.AddScoped<LoginRefreshSystem>();
-        builder.Services.AddScoped<LogoutSystem>();
         builder.Services.AddScoped<RegistrationSystem>();
-        builder.Services.AddScoped<UserProfileSystem>();
-        builder.Services.AddScoped<UserSecuritySystem>();
-        builder.Services.AddScoped<UserAddressSystem>();
-    }
-    internal static void AddIdentityMiddleware( this WebApplication app )
-    {
-        app.UseMiddleware<RevokedTokenMiddleware>();
+        builder.Services.AddScoped<AccountDetailsManager>();
+        builder.Services.AddScoped<AccountSecurityManager>();
+        builder.Services.AddScoped<UserAddressManager>();
     }
 
     static void GetIdentityOptions( IdentityOptions options, IConfiguration configuration )
@@ -51,8 +51,8 @@ internal static class IdentityConfiguration
 
         IConfigurationSection passwordSection = configuration.GetSection( "Identity:Validation:PasswordCriteria:" );
         options.Password.RequiredLength = passwordSection.GetSection( "MinLength" ).Get<int>();
-        options.Password.RequireLowercase = passwordSection.GetSection( "RequireUppercase" ).Get<bool>();
-        options.Password.RequireUppercase = passwordSection.GetSection( "RequireLowercase" ).Get<bool>();
+        options.Password.RequireLowercase = passwordSection.GetSection( "RequireLowercase" ).Get<bool>();
+        options.Password.RequireUppercase = passwordSection.GetSection( "RequireUppercase" ).Get<bool>();
         options.Password.RequireDigit = passwordSection.GetSection( "RequireDigit" ).Get<bool>();
         options.Password.RequireNonAlphanumeric = passwordSection.GetSection( "RequireSpecial" ).Get<bool>();
 
@@ -63,8 +63,32 @@ internal static class IdentityConfiguration
     }
     static void GetAuthenticationOptions( AuthenticationOptions options )
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    }
+    static void GetAuthorizationOptions( AuthorizationOptions options )
+    {
+        options.AddPolicy( "CookieOrJwt", static policy => {
+            policy.AddAuthenticationSchemes( CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme );
+            policy.RequireAuthenticatedUser();
+        } );
+        
+        options.AddPolicy( "Cookie", static policy => {
+            policy.AddAuthenticationSchemes( CookieAuthenticationDefaults.AuthenticationScheme );
+            policy.RequireAuthenticatedUser();
+        } );
+        
+        options.AddPolicy( "Jwt", static policy => {
+            policy.AddAuthenticationSchemes( JwtBearerDefaults.AuthenticationScheme );
+            policy.RequireAuthenticatedUser();
+        } );
+    }
+    static void GetCookieOptions( CookieAuthenticationOptions options )
+    {
+        options.ExpireTimeSpan = TimeSpan.FromDays( 1 ); 
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     }
     static void GetJwtOptions( JwtBearerOptions options, WebApplicationBuilder builder )
     {

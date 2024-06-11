@@ -22,8 +22,4 @@ internal static class AppExtentions
         app.MapCartEndpoints();
         app.MapOrderingEndpoints();
     }
-    internal static void AddCustomMiddleware( this WebApplication app )
-    {
-        app.AddIdentityMiddleware();
-    }
 }

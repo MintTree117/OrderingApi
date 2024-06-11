@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
-using OrderingApplication.Features.Identity.Types;
-using OrderingApplication.Features.Identity.Types.Registration;
+using OrderingApplication.Features.Identity.Registration.Types;
 
 namespace Tests;
 
