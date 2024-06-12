@@ -27,5 +27,9 @@
             <_Parameter1>Tests</_Parameter1>
         </AssemblyAttribute>
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Features\Account\TwoFactor\" />
+      <Folder Include="Features\Authentication\" />
+    </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 using OrderingApplication.Features.Billing;
 using OrderingApplication.Features.Cart;
-using OrderingApplication.Features.Identity;
+using OrderingApplication.Features.Account;
 using OrderingApplication.Features.Ordering;
 
 namespace OrderingApplication.Extentions;

@@ -4,7 +4,7 @@ using OrderingInfrastructure.Email;
 using OrderingInfrastructure.Http;
 using OrderingInfrastructure.Features.Billing;
 using OrderingInfrastructure.Features.Cart;
-using OrderingInfrastructure.Features.Identity;
+using OrderingInfrastructure.Features.Account;
 using OrderingInfrastructure.Features.Ordering;
 
 namespace OrderingInfrastructure;
