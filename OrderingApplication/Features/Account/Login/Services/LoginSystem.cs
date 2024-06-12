@@ -19,12 +19,9 @@ internal sealed class LoginSystem( IdentityConfigCache configCache, UserManager<
         Reply<UserAccount> userReply = await ValidateLogin( request );
         return !userReply.IsSuccess
             ? await HandleLoginFail( userReply )
-            : await Is2FaRequired( userReply )
+            : await Utils.Is2FaRequired( _userManager, userReply.Data )
                 ? await _2FaSystem.HandleRequires2Fa( userReply )
                 : HandleNormalLogin( userReply );
-        
-        async Task<bool> Is2FaRequired( Reply<UserAccount> user ) =>
-            _userManager.SupportsUserTwoFactor && await _userManager.GetTwoFactorEnabledAsync( user.Data );
     }
     async Task<Reply<UserAccount>> ValidateLogin( LoginRequest login )
     {

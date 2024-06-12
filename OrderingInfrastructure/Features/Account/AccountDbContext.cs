@@ -13,4 +13,5 @@ public sealed class AccountDbContext : IdentityDbContext<UserAccount, UserRole, 
         builder.Entity<UserAccount>().Property( u => u.Id ).ValueGeneratedOnAdd(); // Configure the table and primary key
     }
     public DbSet<UserAddress> Addresses { get; set; }
+    public DbSet<UserSession> Sessions { get; set; }
 }

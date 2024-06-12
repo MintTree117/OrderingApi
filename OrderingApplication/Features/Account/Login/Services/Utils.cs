@@ -18,6 +18,8 @@ internal static class Utils
 
         return IReply.Okay();
     }
+    internal static async Task<bool> Is2FaRequired( UserManager<UserAccount> userManager, UserAccount user ) =>
+        userManager.SupportsUserTwoFactor && await userManager.GetTwoFactorEnabledAsync( user );
     internal static async Task<IReply> ProcessAccessFailure( UserManager<UserAccount> userManager, UserAccount account, string message )
     {
         if (account is null)

@@ -3,9 +3,8 @@ using OrderingDomain.Orders;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;
 
-public interface IOrderingRepository
+public interface IOrderingRepository : IEfCoreRepository
 {
-    Task<Reply<bool>> SaveAsync();
     Task<Reply<bool>> InsertOrder( Order order );
     Task<Reply<bool>> InsertOrderLines( IEnumerable<OrderLine> orderLines );
     Task<Reply<bool>> InsertOrderItems( IEnumerable<OrderItem> orderItems );

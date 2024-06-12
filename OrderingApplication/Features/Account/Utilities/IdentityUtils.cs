@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.WebUtilities;
 using OrderingApplication.Features.Account.Registration.Types;
 using OrderingApplication.Features.Account.Security.Types;
+using OrderingDomain.Account;
 using OrderingDomain.Optionals;
 
 namespace OrderingApplication.Features.Account.Utilities;
@@ -59,4 +60,26 @@ internal static class IdentityUtils
         !requires || password.Any( char.IsDigit );
     static bool HandleSpecial( string password, bool requires, string special ) => 
         !requires || Regex.IsMatch( password, $"[{Regex.Escape( special )}]" );
+
+    internal static string GenerateFormattedEmail( UserAccount user, string header, string body )
+    {
+        string html = $@"
+            <!DOCTYPE html>
+            <html lang='en'>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>{header}</title>
+            </head>
+            <body style='font-family: Arial, sans-serif;'>
+                <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
+                    <h2 style='color: #333;'>{header}</h2>
+                    <p>Dear {user.UserName},</p>
+                    {body}
+                </div>
+            </body>
+            </html>";
+
+        return html;
+    }
 }

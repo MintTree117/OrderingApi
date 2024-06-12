@@ -13,7 +13,7 @@ internal static class AccountEndpoints
         app.MapLoginEndpoints();
         app.MapRegistrationEndpoints();
         app.MapAccountAddressEndpoints();
-        app.MapAccountDetailsEndpoints();;
+        app.MapAccountDetailsEndpoints();
         app.MapAccountSecurityEndpoints();
     }
 }

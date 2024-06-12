@@ -5,25 +5,15 @@ using OrderingDomain.Optionals;
 
 namespace OrderingInfrastructure.Features.Account.Repositories;
 
-internal sealed class AddressRepository( AccountDbContext database, ILogger<AddressRepository> logger ) : InfrastructureService<AddressRepository>( logger ), IAddressRepository
+internal sealed class AddressRepository( AccountDbContext database, ILogger<AddressRepository> logger ) 
+    : DatabaseService<AddressRepository>( database, logger ), IAddressRepository
 {
-    readonly AccountDbContext db = database;
-
-    public async Task<Reply<bool>> SaveAsync()
-    {
-        try {
-            return await db.SaveChangesAsync() > 0
-                ? Reply<bool>.With( true )
-                : Reply<bool>.None( DbNotSavedMessage );
-        }
-        catch ( Exception e ) {
-            return HandleDbException<bool>( e );
-        }
-    }
+    readonly AccountDbContext _database = database;
+    
     public async Task<Reply<UserAddress>> GetAddress( Guid addressId )
     {
         try {
-            UserAddress? result = await db.Addresses.FirstOrDefaultAsync( a => a.Id == addressId );
+            UserAddress? result = await _database.Addresses.FirstOrDefaultAsync( a => a.Id == addressId );
             return result is not null
                 ? Reply<UserAddress>.With( result )
                 : Reply<UserAddress>.None( $"No address found with id {addressId}." );
@@ -36,7 +26,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
     {
         try {
             List<UserAddress> result =
-                await db.Addresses
+                await _database.Addresses
                         .Where( a => a.UserId == userId )
                         .ToListAsync();
             return Replies<UserAddress>.With( result );
@@ -48,9 +38,9 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
     public async Task<Reply<PagedResult<UserAddress>>> GetPagedAddresses( string userId, int page, int results )
     {
         try {
-            int totalCount = await db.Addresses.CountAsync( a => a.UserId == userId );
+            int totalCount = await _database.Addresses.CountAsync( a => a.UserId == userId );
             List<UserAddress> result =
-                await db.Addresses
+                await _database.Addresses
                         .Where( a => a.UserId == userId )
                         .Skip( results * GetPage( page ) )
                         .Take( results )
@@ -69,7 +59,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
     public async Task<Reply<bool>> AddAddress( UserAddress address )
     {
         try {
-            await db.Addresses.AddAsync( address );
+            await _database.Addresses.AddAsync( address );
             return await SaveAsync();
         }
         catch ( Exception e ) {
@@ -79,7 +69,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
     public async Task<Reply<bool>> UpdateAddress( UserAddress address )
     {
         try {
-            UserAddress? model = await db.Addresses.FirstOrDefaultAsync( a => a.Id == address.Id );
+            UserAddress? model = await _database.Addresses.FirstOrDefaultAsync( a => a.Id == address.Id );
 
             if (model is null)
                 return IReply.None( "Address id not found." );
@@ -87,7 +77,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             model.Address = address.Address;
             model.IsPrimary = address.IsPrimary;
             
-            db.Addresses.Update( model );
+            _database.Addresses.Update( model );
             return await SaveAsync();
         }
         catch ( Exception e ) {
@@ -97,7 +87,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
     public async Task<Reply<bool>> DeleteAddress( UserAddress address )
     {
         try {
-            db.Addresses.Remove( address );
+            _database.Addresses.Remove( address );
             return await SaveAsync();
         }
         catch ( Exception e ) {

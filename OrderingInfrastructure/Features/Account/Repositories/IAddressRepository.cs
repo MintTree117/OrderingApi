@@ -3,7 +3,7 @@ using OrderingDomain.Optionals;
 
 namespace OrderingInfrastructure.Features.Account.Repositories;
 
-public interface IAddressRepository
+public interface IAddressRepository : IEfCoreRepository
 {
     public Task<Reply<UserAddress>> GetAddress( Guid addressId );
     public Task<Replies<UserAddress>> GetAllAddresses( string userId );

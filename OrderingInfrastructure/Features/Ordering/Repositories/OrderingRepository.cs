@@ -1,30 +1,19 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using OrderingDomain.Optionals;
 using OrderingDomain.Orders;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;
 
-internal sealed class OrderingRepository( OrderingDbContext database, ILogger<OrderingRepository> logger ) : InfrastructureService<OrderingRepository>( logger ), IOrderingRepository
+internal sealed class OrderingRepository( OrderingDbContext database, ILogger<OrderingRepository> logger ) 
+    : DatabaseService<OrderingRepository>( database, logger ), IOrderingRepository
 {
-    readonly OrderingDbContext db = database;
-
-    public async Task<Reply<bool>> SaveAsync()
-    {
-        try {
-            return await db.SaveChangesAsync() > 0
-                ? Reply<bool>.With( true )
-                : Reply<bool>.None( DbNotSavedMessage );
-        }
-        catch ( Exception e ) {
-            return HandleDbException<bool>( e );
-        }
-    }
+    readonly OrderingDbContext _database = database;
+    
     public async Task<Reply<bool>> InsertOrder( Order order )
     {
         try {
-            await db.ActiveOrders.AddAsync( order );
+            await _database.ActiveOrders.AddAsync( order );
             return await SaveAsync();
         }
         catch ( Exception e ) {
@@ -34,7 +23,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     public async Task<Reply<bool>> InsertOrderLines( IEnumerable<OrderLine> orderLines )
     {
         try {
-            await db.AddRangeAsync( orderLines );
+            await _database.AddRangeAsync( orderLines );
             return await SaveAsync();
         }
         catch ( Exception e ) {
@@ -44,7 +33,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     public async Task<Reply<bool>> InsertOrderItems( IEnumerable<OrderItem> orderItems )
     {
         try {
-            await db.ActiveOrderItems.AddRangeAsync( orderItems );
+            await _database.ActiveOrderItems.AddRangeAsync( orderItems );
             return await SaveAsync();
         }
         catch ( Exception e ) {
@@ -54,14 +43,14 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     public async Task<Reply<bool>> DeleteOrderData( Guid orderId )
     {
         try {
-            List<OrderItem> orderItems = await db.ActiveOrderItems.Where( i => i.OrderId == orderId ).ToListAsync();
-            List<OrderLine> orderLines = await db.ActiveOrderLines.Where( l => l.OrderId == orderId ).ToListAsync();
-            Order? order = await db.ActiveOrders.FirstOrDefaultAsync( o => o.Id == orderId );
+            List<OrderItem> orderItems = await _database.ActiveOrderItems.Where( i => i.OrderId == orderId ).ToListAsync();
+            List<OrderLine> orderLines = await _database.ActiveOrderLines.Where( l => l.OrderId == orderId ).ToListAsync();
+            Order? order = await _database.ActiveOrders.FirstOrDefaultAsync( o => o.Id == orderId );
 
-            db.ActiveOrderItems.RemoveRange( orderItems );
-            db.ActiveOrderLines.RemoveRange( orderLines );
+            _database.ActiveOrderItems.RemoveRange( orderItems );
+            _database.ActiveOrderLines.RemoveRange( orderLines );
             if (order is not null)
-                db.ActiveOrders.Remove( order );
+                _database.ActiveOrders.Remove( order );
 
             return await SaveAsync();
         }
@@ -72,7 +61,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     public async Task<Reply<Order>> GetOrderById( Guid orderId )
     {
         try {
-            Order? order = await db.ActiveOrders.FirstOrDefaultAsync( o => o.Id == orderId );
+            Order? order = await _database.ActiveOrders.FirstOrDefaultAsync( o => o.Id == orderId );
             return order is not null
                 ? Reply<Order>.With( order )
                 : Reply<Order>.None( $"Order {orderId} not found in db." );
@@ -85,7 +74,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     {
         try {
             return Replies<OrderLine>.With(
-                await db.ActiveOrderLines.Where( l => l.OrderId == orderId ).ToListAsync() );
+                await _database.ActiveOrderLines.Where( l => l.OrderId == orderId ).ToListAsync() );
         }
         catch ( Exception e ) {
             return HandleDbExceptionOpts<OrderLine>( e );
@@ -95,7 +84,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     {
         try {
             return Replies<OrderItem>.With(
-                await db.ActiveOrderItems.Where( i => i.OrderId == orderId && i.OrderLineId == orderLineId ).ToListAsync() );
+                await _database.ActiveOrderItems.Where( i => i.OrderId == orderId && i.OrderLineId == orderLineId ).ToListAsync() );
         }
         catch ( Exception e ) {
             return HandleDbExceptionOpts<OrderItem>( e );

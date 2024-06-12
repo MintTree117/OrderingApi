@@ -15,11 +15,8 @@ internal static class AccountSecurityEndpoints
         app.MapPut( "api/account/security/updatePassword", static async ( [FromBody] UpdatePasswordRequest request, HttpContext http, AccountSecurityManager system ) =>
             (await system.UpdatePassword( http.UserId(), request ))
             .GetIResult() ).RequireAuthorization( Consts.DefaultPolicy );
-        app.MapPut( "api/account/security/toggle2Fa", static async ( [FromBody] bool enabledTwoFactor, HttpContext http, AccountSecurityManager system ) =>
-            (await system.UpdateTwoFactor( http.UserId(), enabledTwoFactor ))
+        app.MapPut( "api/account/security/update2Fa", static async ( [FromBody] Update2FaRequest request, HttpContext http, AccountSecurityManager system ) =>
+            (await system.Update2Fa( http.UserId(), request ))
             .GetIResult() ).RequireAuthorization( Consts.DefaultPolicy );
-        app.MapPost( "api/account/security/generate2Fa", static async ( [FromBody] bool enabledTwoFactor, HttpContext http, AccountSecurityManager system ) =>
-        (await system.UpdateTwoFactor( http.UserId(), enabledTwoFactor ))
-        .GetIResult() ).RequireAuthorization( Consts.DefaultPolicy );
     }
 }

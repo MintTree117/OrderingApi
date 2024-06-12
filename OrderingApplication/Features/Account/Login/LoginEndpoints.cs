@@ -23,18 +23,18 @@ internal static class LoginEndpoints
         app.MapPost( "api/account/login2Fa", static async ( [FromBody] TwoFactorRequest request, HttpContext http, IdentityConfigCache config, Login2FaSystem system ) =>
             await Login2Fa( request, http, config, system ) );
 
-        app.MapPost( "api/account/loginRecovery", static async ( [FromBody] TwoFactorRequest request, HttpContext http, IdentityConfigCache config, Login2FaSystem system ) =>
-            await Login2Fa( request, http, config, system ) );
-        
-        app.MapGet( "api/account/loginRefresh", static async ( HttpContext http, LoginRefreshSystem refresher ) =>
-            await refresher.GetAccessToken( http.UserId() ) )
+        app.MapPost( "api/account/loginRecovery", static async ( [FromBody] LoginRecoveryRequest request, LoginRecoverySystem system ) =>
+            await LoginRecovery( request, system ) );
+
+        app.MapGet( "api/account/loginRefresh", static async ( HttpContext http, LoginRefreshSystem system ) =>
+            await LoginRefresh( http, system ) )
             .RequireAuthorization( Cookies );
-        
-        app.MapPut( "api/account/logout", static async ( [FromBody] string refreshToken, HttpContext http ) =>
-            await http.SignOutAsync( CookieAuthenticationDefaults.AuthenticationScheme ) )
+
+        app.MapPut( "api/account/logout", static async ( HttpContext http, LogoutSystem system ) =>
+            await Logout( http, system ) )
             .RequireAuthorization( Cookies );
     }
-
+    
     static async Task<IResult> Login( LoginRequest request, HttpContext http, IdentityConfigCache config, LoginSystem system )
     {
         Reply<LoginResponse> jwtResult = await system.Login( request );
@@ -50,6 +50,22 @@ internal static class LoginEndpoints
             return twoFaReply.GetIResult();
 
         return await SignInHttpCookies( twoFaReply.Data.AccessToken, config.JwtConfigRules, http, twoFaReply.Data );
+    }
+    static async Task<IResult> LoginRecovery( LoginRecoveryRequest request, LoginRecoverySystem system )
+    {
+        Reply<LoginResponse> loginReply = await system.LoginRecovery( request );
+        return loginReply.GetIResult(); //DO NOT SIGN IN COOKIES BECAUSE THIS IS SHORT-LIVED RECOVERY ACCESS
+    }
+    static async Task<IResult> LoginRefresh( HttpContext http, LoginRefreshSystem system )
+    {
+        Reply<string> tokenReply = await system.GetAccessToken( http.UserId() );
+        return tokenReply.GetIResult();
+    }
+    static async Task<IResult> Logout( HttpContext http, LogoutSystem system )
+    {
+        await http.SignOutAsync( CookieAuthenticationDefaults.AuthenticationScheme );
+        Reply<bool> sessionReply = await system.Logout( http.UserId(), http.Session );
+        return sessionReply.GetIResult();
     }
     static async Task<IResult> SignInHttpCookies( string accessToken, JwtConfig config, HttpContext http, object data )
     {

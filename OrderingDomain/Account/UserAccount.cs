@@ -11,5 +11,5 @@ public sealed class UserAccount : IdentityUser<string>
         UserName = username;
     }
 
-    public string? RecoveryEmail { get; set; }
+    public string? TwoFactorEmail { get; set; }
 }

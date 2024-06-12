@@ -5,16 +5,17 @@ using OrderingDomain.Orders;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;
 
-internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<OrderingUtilityRepository> logger ) : InfrastructureService<OrderingUtilityRepository>( logger ), IOrderingUtilityRepository
+internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILogger<OrderingUtilityRepository> logger ) 
+    : DatabaseService<OrderingUtilityRepository>( database, logger ), IOrderingUtilityRepository
 {
-    readonly OrderingDbContext db = db;
+    readonly OrderingDbContext _database = database;
 
     public async Task<Reply<bool>> SaveAsync()
     {
         try {
-            return await db.SaveChangesAsync() > 0
+            return await _database.SaveChangesAsync() > 0
                 ? Reply<bool>.With( true )
-                : Reply<bool>.None( DbExceptionMessage );
+                : Reply<bool>.None( MsgDbNoChanges );
         }
         catch ( Exception e ) {
             return HandleDbException<bool>( e );
@@ -23,7 +24,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<O
     public async Task<Reply<bool>> InsertOrderProblem( OrderProblem problem )
     {
         try {
-            await db.OrderProblems.AddAsync( problem );
+            await _database.OrderProblems.AddAsync( problem );
             return await SaveAsync();
         }
         catch ( Exception e ) {
@@ -33,7 +34,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<O
     public async Task<Reply<bool>> InsertPendingCancelLine( OrderLine line )
     {
         try {
-            await db.PendingCancelOrderLines.AddAsync( line );
+            await _database.PendingCancelOrderLines.AddAsync( line );
             return await SaveAsync();
         }
         catch ( Exception e ) {
@@ -43,7 +44,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<O
     public async Task<Reply<bool>> DeletePendingDeleteLine( OrderLine line )
     {
         try {
-            db.PendingCancelOrderLines.Remove( line );
+            _database.PendingCancelOrderLines.Remove( line );
             return await SaveAsync();
         }
         catch ( Exception e ) {
@@ -54,7 +55,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<O
     {
         try {
             return Replies<OrderStateDelayTime>.With(
-                await db.DelayTimes.ToListAsync() );
+                await _database.DelayTimes.ToListAsync() );
         }
         catch ( Exception e ) {
             return HandleDbExceptionOpts<OrderStateDelayTime>( e );
@@ -64,7 +65,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<O
     {
         try {
             return Replies<OrderStateExpireTime>.With(
-                await db.ExpireTimes.ToListAsync() );
+                await _database.ExpireTimes.ToListAsync() );
         }
         catch ( Exception e ) {
             return HandleDbExceptionOpts<OrderStateExpireTime>( e );
@@ -74,7 +75,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<O
     {
         try {
             return Replies<OrderLine>.With(
-                await db.ActiveOrderLines.Where(
+                await _database.ActiveOrderLines.Where(
                     o => !o.Delayed && DateTime.Now - o.LastUpdate > TimeSpan.FromHours( checkHours ) ).ToListAsync() );
         }
         catch ( Exception e ) {
@@ -85,7 +86,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<O
     {
         try {
             return Replies<OrderLine>.With(
-                await db.ActiveOrderLines.Where(
+                await _database.ActiveOrderLines.Where(
                     o => !o.Problem && DateTime.Now - o.LastUpdate > TimeSpan.FromHours( checkHours ) ).ToListAsync() );
         }
         catch ( Exception e ) {
@@ -96,7 +97,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext db, ILogger<O
     {
         try {
             return Replies<OrderLine>.With(
-                await db.ActiveOrderLines.Where( o => o.Problem ).ToListAsync() );
+                await _database.ActiveOrderLines.Where( o => o.Problem ).ToListAsync() );
         }
         catch ( Exception e ) {
             return HandleDbExceptionOpts<OrderLine>( e );

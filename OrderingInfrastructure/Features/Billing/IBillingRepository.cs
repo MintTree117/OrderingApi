@@ -3,7 +3,7 @@ using OrderingDomain.Optionals;
 
 namespace OrderingInfrastructure.Features.Billing;
 
-public interface IBillingRepository
+public interface IBillingRepository : IEfCoreRepository
 {
     Task<Reply<Invoice>> GetInvoice( Guid orderId );
     Task<Reply<Bill>> GetBill( Guid orderId );
