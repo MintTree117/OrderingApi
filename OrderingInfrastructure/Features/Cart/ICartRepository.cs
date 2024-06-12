@@ -1,5 +1,5 @@
 using OrderingDomain.Cart;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Cart;
 

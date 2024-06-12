@@ -2,8 +2,7 @@ using System.Data;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using OrderingDomain.Optionals;
-using OrderingDomain.ValueTypes;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Cart;
 
@@ -31,11 +30,11 @@ public sealed class CartDbContext
         await using SqlConnection c = await GetOpenConnection();
 
         if (c.State != ConnectionState.Open)
-            return Replies<T>.Error( "Connection state not open." );
+            return Replies<T>.Fail( "Connection state not open." );
 
         try {
             IEnumerable<T> enumerable = await c.QueryAsync<T>( sql, parameters, commandType: CommandType.Text );
-            return Replies<T>.With( enumerable );
+            return Replies<T>.Success( enumerable );
         }
         catch ( Exception e ) {
             Console.WriteLine( e );
@@ -47,15 +46,18 @@ public sealed class CartDbContext
         SqlConnection c = await GetOpenConnection();
 
         if (c.State != ConnectionState.Open)
-            return Reply<T>.None( "Problem.Network" );
+            return Reply<T>.Failure( "Problem.Network" );
 
         try {
-            var item = await c.QueryFirstOrDefaultAsync<T>( sql, parameters, commandType: CommandType.Text );
-            return Reply<T>.Maybe( item );
+            T? item = await c.QueryFirstOrDefaultAsync<T>( sql, parameters, commandType: CommandType.Text );
+
+            return item is null
+                ? Reply<T>.Failure( "Not found." )
+                : Reply<T>.Success( item );
         }
         catch ( Exception e ) {
             Console.WriteLine( e );
-            return Reply<T>.Exception( e, "Message" );
+            return Reply<T>.Failure( e, "Message" );
         }
     }
     public async Task<SqlConnection> GetOpenConnection()
@@ -73,17 +75,17 @@ public sealed class CartDbContext
         await using SqlConnection c = await GetOpenConnection();
 
         if (c.State != ConnectionState.Open)
-            return Reply<bool>.None( "Connection state not open." );
+            return Reply<bool>.Failure( "Connection state not open." );
 
         try {
             int result = await c.ExecuteAsync( sql, parameters, commandType: CommandType.Text );
             return result > 0
-                ? Reply<bool>.With( true )
-                : Reply<bool>.None( "Failed to execute async dapper call." );
+                ? Reply<bool>.Success( true )
+                : Reply<bool>.Failure( "Failed to execute async dapper call." );
         }
         catch ( Exception e ) {
             Console.WriteLine( e );
-            return Reply<bool>.Exception( e, "Failed to execute async dapper call." );
+            return Reply<bool>.Failure( e, "Failed to execute async dapper call." );
         }
     }
 }

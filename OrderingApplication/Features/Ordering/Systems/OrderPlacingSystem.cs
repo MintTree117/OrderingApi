@@ -1,7 +1,7 @@
 using OrderingApplication.Features.Ordering.Dtos;
 using OrderingApplication.Features.Ordering.Services;
-using OrderingDomain.Optionals;
 using OrderingDomain.Orders;
+using OrderingDomain.ReplyTypes;
 using OrderingDomain.ValueTypes;
 using OrderingInfrastructure.Email;
 using OrderingInfrastructure.Features.Ordering.Repositories;
@@ -18,15 +18,16 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     // Public Interface (Start)
     internal async Task<Reply<OrderPlaceResponse>> PlaceOrder( OrderPlaceRequest dto )
     {
-        bool ObjidOrder =
+        RepliesLine<ItemOrderGroup> groups = new RepliesLine<ItemOrderGroup>();
+        bool objIdOrder =
             (await MakeOrder( dto ))
-            .Succeeds( out Reply<Order> order ) &&
+            .OutSuccess( out Reply<Order> order ) &&
             (await MakeOrderItems( order.Data, dto ))
-            .Succeeds( out Replies<OrderItem> items ) &&
+            .OutSuccess( out Replies<OrderItem> items ) &&
             (await MakeOrderLocations( order.Data, items.Enumerable ))
-            .Succeeds( out OptsLine<ItemOrderGroup> groups );
+            .AsyncOut( out groups );
 
-        return ObjidOrder
+        return objIdOrder
             ? await HandleObjidOrder( order.Data, groups.ToObjects() )
             : await HandleConflictedOrder( order.Data, groups );
     }
@@ -34,11 +35,11 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     // Cancel Order
     async Task<Reply<OrderPlaceResponse>> CancelOrderRequest( Order order, IEnumerable<OrderLine>? lines, IReply originalError )
     {
-        if ((await CancelOrderLines( lines )).Fails( out Reply<bool> cancelLines ))
+        if ((await CancelOrderLines( lines )).OutSuccess( out Reply<bool> cancelLines ))
             return FailCancelOrderLines( originalError, cancelLines );
 
         return (await _repo.DeleteOrderData( order.Id ))
-            .Succeeds( out Reply<bool> deleteResult )
+            .OutSuccess( out Reply<bool> deleteResult )
                 ? CancelOrderSuccess( originalError )
                 : FailDeleteOrderData( originalError, deleteResult );
     }
@@ -54,25 +55,25 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     }
     async Task CancelOrderLine( OrderLine line )
     {
-        if ((await _locationService.ConfirmCancelOrderLine( line )).Fails( out Reply<bool> f ))
+        if ((await _locationService.ConfirmCancelOrderLine( line )).OutSuccess( out Reply<bool> f ))
             await _utilityRepo.InsertPendingCancelLine( line );
     }
 
     // Make Order
     async Task<Reply<Order>> MakeOrder( OrderPlaceRequest dto ) =>
-        (await MakeOrder( dto.Order, dto.UserId )).Fails( out Reply<Order> orderResult )
+        (await MakeOrder( dto.Order, dto.UserId )).OutSuccess( out Reply<Order> orderResult )
             ? await FailMakeOrder( orderResult )
             : orderResult;
     async Task<Replies<OrderItem>> MakeOrderItems( Order o, OrderPlaceRequest dto ) =>
-        (await MakeOrderItems( o, dto.Items )).Fail( out Replies<OrderItem> itemsResult )
+        (await MakeOrderItems( o, dto.Items )).OutFailure( out Replies<OrderItem> itemsResult )
             ? await FailMakeOrderItems( o, itemsResult )
             : itemsResult;
-    async Task<OptsLine<ItemOrderGroup>> MakeOrderLocations( Order o, IEnumerable<OrderItem> items )
+    async Task<RepliesLine<ItemOrderGroup>> MakeOrderLocations( Order o, IEnumerable<OrderItem> items )
     {
-        OptsLine<ItemOrderGroup> multi = new();
+        RepliesLine<ItemOrderGroup> multi = new();
         foreach ( OrderItem item in items )
             multi.Options.Add( (await FindNearestLocation( o.ShippingAddress, item.ProductId, item.Quantity ))
-                .Succeeds( out Reply<OrderLocation> opt )
+                .OutSuccess( out Reply<OrderLocation> opt )
                     ? MadeOrderLocation( item, opt.Data )
                     : FailedMakeOrderLocation() );
         return multi;
@@ -81,9 +82,9 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     {
         Order order = OrderDto.Model( dto, customerId );
         return (await _repo.InsertOrder( order ))
-            .Succeeds( out Reply<bool> opt )
-                ? Reply<Order>.With( order )
-                : Reply<Order>.None( opt );
+            .OutSuccess( out Reply<bool> opt )
+                ? Reply<Order>.Success( order )
+                : Reply<Order>.Failure( opt );
     }
     async Task<Replies<OrderItem>> MakeOrderItems( Order order, IReadOnlyCollection<OrderItemDto> dtos )
     {
@@ -91,33 +92,33 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
         foreach ( OrderItem i in items )
             i.OrderId = order.Id;
         return (await _repo.InsertOrderItems( items ))
-            .Succeeds( out Reply<bool> opt )
-                ? Replies<OrderItem>.With( items )
-                : Replies<OrderItem>.None( opt );
+            .OutSuccess( out Reply<bool> opt )
+                ? Replies<OrderItem>.Success( items )
+                : Replies<OrderItem>.Fail( opt );
     }
     async Task<Reply<Order>> FailMakeOrder( Reply<Order> orderResult ) =>
-        Reply<Order>.None( await CancelOrderRequest( orderResult.Data, null, orderResult ) );
+        Reply<Order>.Failure( await CancelOrderRequest( orderResult.Data, null, orderResult ) );
     async Task<Replies<OrderItem>> FailMakeOrderItems( Order o, Replies<OrderItem> itemsResult ) =>
-        Replies<OrderItem>.None( await CancelOrderRequest( o, null, itemsResult ) );
+        Replies<OrderItem>.Fail( await CancelOrderRequest( o, null, itemsResult ) );
     async Task<Reply<OrderPlaceResponse>> HandleObjidOrder( Order order, List<ItemOrderGroup> groups )
     {
-        if ((await MakeOrderGroups( order, groups )).Fail( out Replies<OrderLine> orderOption ))
+        if ((await MakeOrderGroups( order, groups )).OutFailure( out Replies<OrderLine> orderOption ))
             await CancelOrderRequest( order, null, orderOption );
 
         return (await ConfirmLocationOrders( orderOption.Enumerable ))
-            .Succeeds( out Reply<bool> confirmOption )
+            .OutSuccess( out Reply<bool> confirmOption )
                 ? await SendConfirmationEmailAndReturn( order, orderOption.Enumerable.ToList() )
                 : await CancelOrderRequest( order, orderOption.Enumerable.ToList(), confirmOption );
     }
-    async Task<Reply<OrderPlaceResponse>> HandleConflictedOrder( Order order, OptsLine<ItemOrderGroup> groups )
+    async Task<Reply<OrderPlaceResponse>> HandleConflictedOrder( Order order, RepliesLine<ItemOrderGroup> groups )
     {
-        if ((await CancelOrderRequest( order, null, Reply<bool>.With( true ) ))
-            .Fails( out Reply<OrderPlaceResponse> cancelResult ))
+        if ((await CancelOrderRequest( order, null, Reply<bool>.Success( true ) ))
+            .OutSuccess( out Reply<OrderPlaceResponse> cancelResult ))
             return cancelResult;
 
         List<Guid> unavailableItemIds = [];
         foreach ( Reply<ItemOrderGroup> o in groups.Options )
-            if (!o.IsSuccess)
+            if (!o.Succeeded)
                 unavailableItemIds.Add( o.Data.Item.Id );
         return ConflictedOrder( unavailableItemIds );
     }
@@ -132,14 +133,14 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
 
         SetGroupItemLocations( groupedItems, checkedLocations );
 
-        if ((await InsertOrderLines( checkedLocations )).Fails( out Reply<bool> insertResult ))
+        if ((await InsertOrderLines( checkedLocations )).OutSuccess( out Reply<bool> insertResult ))
             return FailInsertOrderLines( insertResult );
 
         SetItemOrderGroupIds( groupedItems );
 
-        return (await Save()).Succeeds( out Reply<bool> saveOpt )
-            ? Replies<OrderLine>.With( checkedLocations.Values )
-            : Replies<OrderLine>.None( saveOpt );
+        return (await Save()).OutSuccess( out Reply<bool> saveOpt )
+            ? Replies<OrderLine>.Success( checkedLocations.Values )
+            : Replies<OrderLine>.Fail( saveOpt );
     }
     static bool GetCheckedLocations( Order order, List<ItemOrderGroup> groupedItems, ref Dictionary<OrderLocation, OrderLine> checkedLocations )
     {
@@ -165,7 +166,7 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     // Location I/O
     async Task<Reply<OrderLocation>> FindNearestLocation( Address shippingAddress, Guid productId, int productQuantity ) =>
         (await CheckLocations( shippingAddress, productId, productQuantity ))
-        .Succeeds( out Reply<OrderLocation> location )
+        .OutSuccess( out Reply<OrderLocation> location )
             ? LocationFound( location.Data )
             : NoLocationFound( productId, productQuantity );
     async Task<Reply<OrderLocation>> CheckLocations( Address shippingAddress, Guid productId, int productQuantity )
@@ -175,12 +176,15 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
             bestLocation = await CheckLocation( newLocation, bestLocation, shippingAddress, productId, productQuantity )
                 ? newLocation
                 : bestLocation;
-        return Reply<OrderLocation>.Maybe( bestLocation );
+        
+        return bestLocation is null
+            ? Reply<OrderLocation>.Failure()
+            : Reply<OrderLocation>.Success( bestLocation );
     }
     async Task<bool> CheckLocation( OrderLocation location, OrderLocation? bestLocation, Address shippingAddress, Guid productId, int productQuantity )
     {
         if ((await _locationService.CheckOrderStock( location.Id, productId, productQuantity ))
-            .Fails( out Reply<bool> stockResult ))
+            .OutSuccess( out Reply<bool> stockResult ))
             return false;
 
         return location.Address.HeuristicDistanceFrom( shippingAddress )
@@ -190,14 +194,12 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     {
         foreach ( OrderLine l in lines )
             if ((await _locationService.PlaceOrderLine( l ))
-                .Fails( out Reply<bool> result ))
+                .OutSuccess( out Reply<bool> result ))
                 return FailedConfirmLocationOrders( result );
         return ConfirmedLocationOrders();
     }
     async Task<Reply<OrderPlaceResponse>> SendConfirmationEmailAndReturn( Order order, List<OrderLine> orderGroups )
     {
-        const string header =
-            "Order Confirmation";
         string body =
             $@"<h2>Order Confirmation</h2>
             <p>Dear Customer,</p>
@@ -209,10 +211,10 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
             <p>Billing Address: {order.BillingAddress}</p>
             <p>Thank you for shopping with us!</p>";
 
-        _emailSender.SendBasicEmail( order.CustomerEmail, header, body );
+        _emailSender.SendBasicEmail( order.CustomerEmail, "Order Confirmation", body );
         UpdateOrderStatus( order, orderGroups );
 
-        return (await Save()).Succeeds( out Reply<bool> saveResult )
+        return (await Save()).OutSuccess( out Reply<bool> saveResult )
             ? OrderPlaced( order )
             : await CancelOrderRequest( order, orderGroups, saveResult );
     }
@@ -229,35 +231,35 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
 
     // Returns Syntax Sugar
     static Reply<OrderPlaceResponse> FailCancelOrderLines( IReply originalError, Reply<bool> cancelResult ) =>
-        Reply<OrderPlaceResponse>.None( $"{originalError.Message()} And failed to cancel order lines. Please contact support. {cancelResult.Message()}" );
+        Reply<OrderPlaceResponse>.Failure( $"{originalError.GetMessage()} And failed to cancel order lines. Please contact support. {cancelResult.GetMessage()}" );
     static Reply<OrderPlaceResponse> FailDeleteOrderData( IReply originalError, Reply<bool> deleteResult ) =>
-        Reply<OrderPlaceResponse>.None( $"{originalError.Message()} And failed to delete the order data : {deleteResult.Message()}" );
+        Reply<OrderPlaceResponse>.Failure( $"{originalError.GetMessage()} And failed to delete the order data : {deleteResult.GetMessage()}" );
     static Reply<OrderPlaceResponse> CancelOrderSuccess( IReply originalError ) =>
-        Reply<OrderPlaceResponse>.None( originalError.Message() );
+        Reply<OrderPlaceResponse>.Failure( originalError.GetMessage() );
     static Reply<OrderPlaceResponse> ConflictedOrder( List<Guid> unavailableItemIds ) =>
-        Reply<OrderPlaceResponse>.With( OrderPlaceResponse.Unavailable( unavailableItemIds ) );
+        Reply<OrderPlaceResponse>.Success( OrderPlaceResponse.Unavailable( unavailableItemIds ) );
     static Reply<ItemOrderGroup> FailedMakeOrderLocation() =>
-        Reply<ItemOrderGroup>.None( "Failed to make order locations." );
+        Reply<ItemOrderGroup>.Failure( "Failed to make order locations." );
     static Reply<ItemOrderGroup> MadeOrderLocation( OrderItem item, OrderLocation location ) =>
-        Reply<ItemOrderGroup>.With( ItemOrderGroup.With( item, location ) );
+        Reply<ItemOrderGroup>.Success( ItemOrderGroup.With( item, location ) );
     static Reply<bool> NoLinesToCancel() =>
-        Reply<bool>.With( true );
+        Reply<bool>.Success( true );
     static Reply<bool> OrderLinesCancelled() =>
-        Reply<bool>.With( true );
+        Reply<bool>.Success( true );
     static Replies<OrderLine> CheckLocationsFail() =>
-        Replies<OrderLine>.Error( "Failed to create an order group." );
+        Replies<OrderLine>.Fail( "Failed to create an order group." );
     static Replies<OrderLine> FailInsertOrderLines( Reply<bool> insert ) =>
-        Replies<OrderLine>.Error( insert.Message() );
+        Replies<OrderLine>.Fail( insert.GetMessage() );
     static Reply<OrderLocation> LocationFound( OrderLocation bestLocation ) =>
-        Reply<OrderLocation>.With( bestLocation );
+        Reply<OrderLocation>.Success( bestLocation );
     static Reply<OrderLocation> NoLocationFound( Guid productId, int productQuantity ) =>
-        Reply<OrderLocation>.None( $"No best location was found for product id: {productId} with quantity: {productQuantity}" );
+        Reply<OrderLocation>.Failure( $"No best location was found for product id: {productId} with quantity: {productQuantity}" );
     static Reply<bool> FailedConfirmLocationOrders( Reply<bool> result ) =>
         result;
     static Reply<bool> ConfirmedLocationOrders() =>
-        Reply<bool>.With( true );
+        Reply<bool>.Success( true );
     static Reply<OrderPlaceResponse> OrderPlaced( Order order ) =>
-        Reply<OrderPlaceResponse>.With( OrderPlaceResponse.Placed( order.Id ) );
+        Reply<OrderPlaceResponse>.Success( OrderPlaceResponse.Placed( order.Id ) );
 
     sealed class ItemOrderGroup
     {

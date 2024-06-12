@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features;
 
@@ -17,8 +17,8 @@ internal abstract class DatabaseService<TService>( DbContext context, ILogger<TS
         try
         {
             return await _context.SaveChangesAsync() > 0
-                ? Reply<bool>.With( true )
-                : Reply<bool>.None( MsgDbNoChanges );
+                ? Reply<bool>.Success( true )
+                : Reply<bool>.Failure( MsgDbNoChanges );
         }
         catch ( Exception e )
         {
@@ -28,11 +28,11 @@ internal abstract class DatabaseService<TService>( DbContext context, ILogger<TS
     protected Reply<T> HandleDbException<T>( Exception e )
     {
         Logger.LogError( e, e.Message );
-        return Reply<T>.None( MsgDbException );
+        return Reply<T>.Failure( MsgDbException );
     }
     protected Replies<T> HandleDbExceptionOpts<T>( Exception e )
     {
         Logger.LogError( e, e.Message );
-        return Replies<T>.None( MsgDbException );
+        return Replies<T>.Fail( MsgDbException );
     }
 }

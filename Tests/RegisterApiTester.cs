@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using OrderingApplication.Features.Account.Registration.Types;
+using OrderingApplication.Features.User.Registration.Types;
 
 namespace Tests;
 

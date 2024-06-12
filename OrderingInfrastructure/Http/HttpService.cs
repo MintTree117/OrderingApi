@@ -3,21 +3,22 @@ using System.Net.Http.Json;
 using System.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Http;
 
-internal sealed class HttpService( IConfiguration configuration, ILogger<HttpService> logger ) : InfrastructureService<HttpService>( logger ), IHttpService
+internal sealed class HttpService( IConfiguration configuration, ILogger<HttpService> logger ) : IHttpService
 {
     const string ErrorMessage = "An exception occurred while trying to make an http request.";
-    readonly HttpClient http = GetHttpClient( configuration );
+    readonly HttpClient _http = GetHttpClient( configuration );
+    readonly ILogger<HttpService> _logger = logger;
 
     public async Task<Reply<T>> TryGetObjRequest<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null )
     {
         try {
             SetAuthHttpHeader( authToken );
             string url = GetQueryParameters( apiPath, parameters );
-            HttpResponseMessage httpResponse = await http.GetAsync( url );
+            HttpResponseMessage httpResponse = await _http.GetAsync( url );
             return await HandleHttpObjResponse<T>( httpResponse );
         }
         catch ( Exception e ) {
@@ -28,7 +29,7 @@ internal sealed class HttpService( IConfiguration configuration, ILogger<HttpSer
     {
         try {
             SetAuthHttpHeader( authToken );
-            HttpResponseMessage httpResponse = await http.PostAsJsonAsync( apiPath, body );
+            HttpResponseMessage httpResponse = await _http.PostAsJsonAsync( apiPath, body );
             return await HandleHttpObjResponse<T>( httpResponse );
         }
         catch ( Exception e ) {
@@ -39,7 +40,7 @@ internal sealed class HttpService( IConfiguration configuration, ILogger<HttpSer
     {
         try {
             SetAuthHttpHeader( authToken );
-            HttpResponseMessage httpResponse = await http.PutAsJsonAsync( apiPath, body );
+            HttpResponseMessage httpResponse = await _http.PutAsJsonAsync( apiPath, body );
             return await HandleHttpObjResponse<T>( httpResponse );
         }
         catch ( Exception e ) {
@@ -51,7 +52,7 @@ internal sealed class HttpService( IConfiguration configuration, ILogger<HttpSer
         try {
             SetAuthHttpHeader( authToken );
             string url = GetQueryParameters( apiPath, parameters );
-            HttpResponseMessage httpResponse = await http.DeleteAsync( url );
+            HttpResponseMessage httpResponse = await _http.DeleteAsync( url );
             return await HandleHttpObjResponse<T>( httpResponse );
         }
         catch ( Exception e ) {
@@ -76,23 +77,23 @@ internal sealed class HttpService( IConfiguration configuration, ILogger<HttpSer
         if (httpResponse.IsSuccessStatusCode) {
             var httpContent = await httpResponse.Content.ReadFromJsonAsync<T>();
             return httpContent is not null
-                ? Reply<T>.With( httpContent )
-                : Reply<T>.None( "No data returned from http request." );
+                ? Reply<T>.Success( httpContent )
+                : Reply<T>.Failure( "No data returned from http request." );
         }
 
         string errorContent = await httpResponse.Content.ReadAsStringAsync();
         Console.WriteLine( $"An exception was thrown during an http request : {errorContent}" );
-        return Reply<T>.None( $"An exception was thrown during an http request : {errorContent}" );
+        return Reply<T>.Failure( $"An exception was thrown during an http request : {errorContent}" );
     }
     
     Reply<T> HandleHttpObjException<T>( Exception e, string requestUrl )
-    {
-        Logger.LogError( e, e.Message );
-        return Reply<T>.None( $"{ErrorMessage} : {requestUrl}" );
+    { 
+        _logger.LogError( e, e.Message );
+        return Reply<T>.Failure( $"{ErrorMessage} : {requestUrl}" );
     }
     void SetAuthHttpHeader( string? token )
     {
-        http.DefaultRequestHeaders.Authorization = !string.IsNullOrWhiteSpace( token )
+        _http.DefaultRequestHeaders.Authorization = !string.IsNullOrWhiteSpace( token )
             ? new System.Net.Http.Headers.AuthenticationHeaderValue( "Bearer", token )
             : null;
     }

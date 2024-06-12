@@ -1,5 +1,5 @@
 using OrderingDomain.Cart;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingApplication.Features.Cart;
 
@@ -9,7 +9,7 @@ internal static class CartExtentions
     {
         List<CartItemDto> dtos = [];
         dtos.AddRange( from m in models.Enumerable select MapToDto( m ) );
-        return Replies<CartItemDto>.With( dtos );
+        return Replies<CartItemDto>.Success( dtos );
     }
     internal static List<CartItem> Models( this IEnumerable<CartItemDto> dtos )
     {

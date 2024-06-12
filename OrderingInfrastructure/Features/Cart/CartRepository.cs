@@ -1,13 +1,13 @@
 using System.Data;
 using Dapper;
 using OrderingDomain.Cart;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Cart;
 
-internal sealed class CartRepository( CartDbContext cartDb ) : ICartRepository
+internal sealed class CartRepository( CartDbContext database ) : ICartRepository
 {
-    readonly CartDbContext db = cartDb;
+    readonly CartDbContext _database = database;
 
     public async Task<Replies<CartItem>> GetUpdatedCart( string userId, List<CartItem> itemsFromClient )
     {
@@ -30,7 +30,7 @@ internal sealed class CartRepository( CartDbContext cartDb ) : ICartRepository
         DynamicParameters parameters = new();
         parameters.Add( CartDbConsts.UserId, userId );
         parameters.Add( CartDbConsts.CartItems, table.AsTableValuedParameter( CartDbConsts.CartItemsTvp ) );
-        return await db.QueryAsync<CartItem>( sql, parameters );
+        return await _database.QueryAsync<CartItem>( sql, parameters );
     }
     public async Task<Reply<bool>> AddOrUpdate( Guid productId, string userId, int quantity )
     {
@@ -52,7 +52,7 @@ internal sealed class CartRepository( CartDbContext cartDb ) : ICartRepository
         parameters.Add( CartDbConsts.ProductId, productId );
         parameters.Add( CartDbConsts.UserId, userId );
         parameters.Add( CartDbConsts.Quantity, quantity );
-        return await db.ExecuteAsync( sql, parameters );
+        return await _database.ExecuteAsync( sql, parameters );
     }
     public async Task<Reply<bool>> Delete( Guid productId, string userId )
     {
@@ -66,7 +66,7 @@ internal sealed class CartRepository( CartDbContext cartDb ) : ICartRepository
         DynamicParameters parameters = new();
         parameters.Add( CartDbConsts.ProductId, productId );
         parameters.Add( CartDbConsts.UserId, userId );
-        return await db.ExecuteAsync( sql, parameters );
+        return await _database.ExecuteAsync( sql, parameters );
     }
     public async Task<Reply<bool>> Empty( string userId )
     {
@@ -78,7 +78,7 @@ internal sealed class CartRepository( CartDbContext cartDb ) : ICartRepository
 
         DynamicParameters parameters = new();
         parameters.Add( CartDbConsts.UserId, userId );
-        return await db.ExecuteAsync( sql, parameters );
+        return await _database.ExecuteAsync( sql, parameters );
     }
 
     static DataTable GetCartItemsTable( string userId, List<CartItem> items )

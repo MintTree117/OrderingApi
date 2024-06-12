@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingApplication.Extentions;
 
@@ -18,16 +18,27 @@ internal static class UtilityExtentions
     internal static string Username( this HttpContext context ) =>
         context.User.FindFirstValue( ClaimTypes.Name ) ?? string.Empty;
 
+    internal static string UserId( this ClaimsPrincipal claims ) =>
+        claims.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.NameIdentifier )?.Value ?? string.Empty;
+    internal static string Email( this ClaimsPrincipal claims ) =>
+        claims.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.Email )?.Value ?? string.Empty;
+    internal static string Username( this ClaimsPrincipal claims ) =>
+        claims.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.Name )?.Value ?? string.Empty;
+    
     internal static IResult GetIResult<T>( this Reply<T> reply ) =>
-        reply.IsSuccess
+        reply.Succeeded
             ? Results.Ok( reply.Data )
-            : FromOption( reply );
+            : FromReply( reply );
     internal static IResult GetIResult<T>( this Replies<T> reply ) =>
-        reply.IsSuccess
+        reply.Succeeded
             ? Results.Ok( reply.Enumerable )
-            : FromOption( reply );
-    static IResult FromOption( IReply reply ) =>
+            : FromReply( reply );
+    internal static IResult GetIResult( this IReply reply ) =>
+        reply.CheckSuccess()
+            ? Results.Ok( reply.GetData() )
+            : FromReply( reply );
+    static IResult FromReply( IReply reply ) =>
         Results.Problem( new ProblemDetails() {
-            Detail = reply.Message()
+            Detail = reply.GetMessage()
         } );
 }

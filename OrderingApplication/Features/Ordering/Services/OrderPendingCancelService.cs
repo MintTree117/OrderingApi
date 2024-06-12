@@ -1,5 +1,5 @@
-using OrderingDomain.Optionals;
 using OrderingDomain.Orders;
+using OrderingDomain.ReplyTypes;
 using OrderingInfrastructure.Features.Ordering.Repositories;
 
 namespace OrderingApplication.Features.Ordering.Services;
@@ -27,17 +27,17 @@ internal sealed class OrderPendingCancelService( IServiceProvider serviceProvide
         var loc = scope.ServiceProvider.GetService<OrderLocationService>()!;
 
         if ((await repo.GetPendingCancelLines())
-            .Fail( out Replies<OrderLine> linesOpt ))
-            Console.WriteLine( linesOpt.Message() );
+            .OutFailure( out Replies<OrderLine> linesOpt ))
+            Console.WriteLine( linesOpt.GetMessage() );
 
         foreach ( OrderLine l in linesOpt.Enumerable )
-            if ((await CancelLine( l, loc )).Succeeds( out Reply<bool> s ))
+            if ((await CancelLine( l, loc )).OutSuccess( out Reply<bool> s ))
                 await repo.DeletePendingDeleteLine( l );
     }
     async Task<Reply<bool>> CancelLine( OrderLine line, OrderLocationService loc ) =>
         (await loc.ConfirmCancelOrderLine( line ))
-        .Fails( out Reply<bool> opt )
-            ? Reply<bool>.With( true )
+        .OutSuccess( out Reply<bool> opt )
+            ? Reply<bool>.Success( true )
             : opt;
 
     static TimeSpan GetRefreshInterval( IConfiguration config ) =>

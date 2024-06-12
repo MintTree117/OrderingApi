@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Optionals;
 using OrderingDomain.Orders;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;
 
@@ -9,18 +9,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
     : DatabaseService<OrderingUtilityRepository>( database, logger ), IOrderingUtilityRepository
 {
     readonly OrderingDbContext _database = database;
-
-    public async Task<Reply<bool>> SaveAsync()
-    {
-        try {
-            return await _database.SaveChangesAsync() > 0
-                ? Reply<bool>.With( true )
-                : Reply<bool>.None( MsgDbNoChanges );
-        }
-        catch ( Exception e ) {
-            return HandleDbException<bool>( e );
-        }
-    }
+    
     public async Task<Reply<bool>> InsertOrderProblem( OrderProblem problem )
     {
         try {
@@ -54,7 +43,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
     public async Task<Replies<OrderStateDelayTime>> GetDelayTimes()
     {
         try {
-            return Replies<OrderStateDelayTime>.With(
+            return Replies<OrderStateDelayTime>.Success(
                 await _database.DelayTimes.ToListAsync() );
         }
         catch ( Exception e ) {
@@ -64,7 +53,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
     public async Task<Replies<OrderStateExpireTime>> GetExpiryTimes()
     {
         try {
-            return Replies<OrderStateExpireTime>.With(
+            return Replies<OrderStateExpireTime>.Success(
                 await _database.ExpireTimes.ToListAsync() );
         }
         catch ( Exception e ) {
@@ -74,7 +63,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
     public async Task<Replies<OrderLine>> GetTopUnhandledDelayedOrderLines( int amount, int checkHours )
     {
         try {
-            return Replies<OrderLine>.With(
+            return Replies<OrderLine>.Success(
                 await _database.ActiveOrderLines.Where(
                     o => !o.Delayed && DateTime.Now - o.LastUpdate > TimeSpan.FromHours( checkHours ) ).ToListAsync() );
         }
@@ -85,7 +74,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
     public async Task<Replies<OrderLine>> GetTopUnhandledExpiredOrderLines( int amount, int checkHours )
     {
         try {
-            return Replies<OrderLine>.With(
+            return Replies<OrderLine>.Success(
                 await _database.ActiveOrderLines.Where(
                     o => !o.Problem && DateTime.Now - o.LastUpdate > TimeSpan.FromHours( checkHours ) ).ToListAsync() );
         }
@@ -96,8 +85,8 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
     public async Task<Replies<OrderLine>> GetPendingCancelLines()
     {
         try {
-            return Replies<OrderLine>.With(
-                await _database.ActiveOrderLines.Where( o => o.Problem ).ToListAsync() );
+            return Replies<OrderLine>.Success(
+                await _database.ActiveOrderLines.Where( static o => o.Problem ).ToListAsync() );
         }
         catch ( Exception e ) {
             return HandleDbExceptionOpts<OrderLine>( e );

@@ -8,13 +8,11 @@ internal static class BillingEndpoints
 {
     internal static void MapBillingEndpoints( this IEndpointRouteBuilder app )
     {
-        app.MapGet( "api/billing/view/invoice",
-               async ( [FromQuery] Guid orderId, IBillingRepository repository ) =>
+        app.MapGet( "api/billing/view/invoice", static async ( [FromQuery] Guid orderId, IBillingRepository repository ) =>
                await GetInvoice( orderId, repository ) )
            .RequireAuthorization();
 
-        app.MapGet( "api/billing/view/bill",
-               async ( [FromQuery] Guid orderId, IBillingRepository repository ) =>
+        app.MapGet( "api/billing/view/bill", static async ( [FromQuery] Guid orderId, IBillingRepository repository ) =>
                await GetInvoice( orderId, repository ) )
            .RequireAuthorization();
     }

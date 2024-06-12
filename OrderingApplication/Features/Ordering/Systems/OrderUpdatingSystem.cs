@@ -1,8 +1,8 @@
 using System.Text;
 using OrderingApplication.Features.Billing;
 using OrderingApplication.Features.Ordering.Dtos;
-using OrderingDomain.Optionals;
 using OrderingDomain.Orders;
+using OrderingDomain.ReplyTypes;
 using OrderingInfrastructure.Email;
 using OrderingInfrastructure.Features.Ordering.Repositories;
 
@@ -17,28 +17,28 @@ internal sealed class OrderUpdatingSystem( IOrderingRepository repository, Billi
     internal async Task<Reply<bool>> UpdateOrder( OrderUpdateRequest update )
     {
         if (update.OrderState is OrderState.Processing)
-            return Reply<bool>.None( "Cannot update order status to Received." );
+            return Reply<bool>.Failure( "Cannot update order status to Received." );
 
         if ((await _repository.GetOrderById( update.OrderId ))
-            .Fails( out Reply<Order> orderResult ))
-            return Reply<bool>.None( orderResult );
+            .OutSuccess( out Reply<Order> orderResult ))
+            return Reply<bool>.Failure( orderResult );
 
         if ((await _repository.GetOrderLinesByOrderId( update.OrderId ))
-            .Fail( out Replies<OrderLine> orderLinesResult ))
-            return Reply<bool>.None( orderLinesResult );
+            .OutFailure( out Replies<OrderLine> orderLinesResult ))
+            return Reply<bool>.Failure( orderLinesResult );
 
         if (GetCurrentOrderLine( orderLinesResult.Enumerable, update.OrderId )
-            .Fails( out Reply<OrderLine> currentLineResult ))
-            return Reply<bool>.None( currentLineResult );
+            .OutSuccess( out Reply<OrderLine> currentLineResult ))
+            return Reply<bool>.Failure( currentLineResult );
 
         if (orderLinesResult.Enumerable.Any( s => s.State != currentLineResult.Data.State ))
             return await HandleLineUpdate( currentLineResult.Data, orderResult.Data.CustomerEmail );
 
         orderResult.Data.State = currentLineResult.Data.State;
-
-        if ((await _repository.GetItemsForOrderLines( orderLinesResult.Enumerable ))
-            .Fails( out Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>> orderItemsResult ))
-            return Reply<bool>.None( orderItemsResult );
+        
+        if (!(await _repository.GetItemsForOrderLines( orderLinesResult.Enumerable ))
+            .OutSuccess( out Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>> orderItemsResult ))
+            return Reply<bool>.Failure( orderItemsResult );
 
         return await HandleOrderUpdate( orderResult.Data, orderLinesResult.Enumerable, orderItemsResult.Data );
     }
@@ -48,22 +48,22 @@ internal sealed class OrderUpdatingSystem( IOrderingRepository repository, Billi
         return order.State switch {
             OrderState.Shipping => await HandleOrderShipped( order, lines, items ),
             OrderState.Delivered => await HandleOrderDelivered( order, lines, items ),
-            _ => Reply<bool>.With( true )
+            _ => Reply<bool>.Success( true )
         };
     }
     async Task<Reply<bool>> HandleOrderShipped( Order order, IEnumerable<OrderLine> lines, Dictionary<OrderLine, IEnumerable<OrderItem>> items )
     {
-        if (_emailSender
+        if (!_emailSender
             .SendBasicEmail( order.CustomerEmail, "Order Shipped", GenerateOrderEmailBody( order, lines, items ) )
-            .Fails( out Reply<bool> emailResult ))
+            .OutSuccess( out Reply<bool> emailResult ))
             return emailResult;
         return await _billingService.SendInvoice( order );
     }
     async Task<Reply<bool>> HandleOrderDelivered( Order order, IEnumerable<OrderLine> lines, Dictionary<OrderLine, IEnumerable<OrderItem>> items )
     {
-        if (_emailSender
+        if (!_emailSender
             .SendBasicEmail( order.CustomerEmail, "Order Delivered", GenerateOrderEmailBody( order, lines, items ) )
-            .Fails( out Reply<bool> emailResult ))
+            .OutSuccess( out Reply<bool> emailResult ))
             return emailResult;
         return await _billingService.SendBill( order );
     }
@@ -85,36 +85,36 @@ internal sealed class OrderUpdatingSystem( IOrderingRepository repository, Billi
     }
     async Task<Reply<bool>> HandleLineProcessed( string email, OrderLine line ) =>
         (await _repository.GetItemsForLineById( line.OrderId, line.Id ))
-        .Succeeds( out Replies<OrderItem> itemsResult )
+        .OutSuccess( out Replies<OrderItem> itemsResult )
             ? _emailSender.SendBasicEmail( email, "Order Processed", GenerateLineEmailBody( line, itemsResult.Enumerable ) )
-            : Reply<bool>.None( itemsResult );
+            : Reply<bool>.Failure( itemsResult );
     async Task<Reply<bool>> HandleLineFulfilling( string email, OrderLine line ) =>
         (await _repository.GetItemsForLineById( line.OrderId, line.Id ))
-        .Succeeds( out Replies<OrderItem> itemsResult )
+        .OutSuccess( out Replies<OrderItem> itemsResult )
             ? _emailSender.SendBasicEmail( email, "Order Line Fulfilling", GenerateLineEmailBody( line, itemsResult.Enumerable ) )
-            : Reply<bool>.None( itemsResult );
+            : Reply<bool>.Failure( itemsResult );
     async Task<Reply<bool>> HandleLineShipped( string email, OrderLine line ) =>
         (await _repository.GetItemsForLineById( line.OrderId, line.Id ))
-        .Succeeds( out Replies<OrderItem> itemsResult )
+        .OutSuccess( out Replies<OrderItem> itemsResult )
             ? _emailSender.SendBasicEmail( email, "Order Line Shipped", GenerateLineEmailBody( line, itemsResult.Enumerable ) )
-            : Reply<bool>.None( itemsResult );
+            : Reply<bool>.Failure( itemsResult );
     async Task<Reply<bool>> HandleLineDelivered( string email, OrderLine line ) =>
         (await _repository.GetItemsForLineById( line.OrderId, line.Id ))
-        .Succeeds( out Replies<OrderItem> itemsResult )
+        .OutSuccess( out Replies<OrderItem> itemsResult )
             ? _emailSender.SendBasicEmail( email, "Order Line Delivered", GenerateLineEmailBody( line, itemsResult.Enumerable ) )
-            : Reply<bool>.None( itemsResult );
+            : Reply<bool>.Failure( itemsResult );
     async Task<Reply<bool>> HandleLineSuspended( string email, OrderLine line ) =>
         (await _repository.GetItemsForLineById( line.OrderId, line.Id ))
-        .Succeeds( out Replies<OrderItem> itemsResult )
+        .OutSuccess( out Replies<OrderItem> itemsResult )
             ? _emailSender.SendBasicEmail( email, "Order Line Suspended", GenerateLineEmailBody( line, itemsResult.Enumerable ) )
-            : Reply<bool>.None( itemsResult );
+            : Reply<bool>.Failure( itemsResult );
 
     static Reply<OrderLine> GetCurrentOrderLine( IEnumerable<OrderLine> lines, Guid orderId )
     {
         OrderLine? currentLine = lines.FirstOrDefault( l => l.Id == orderId );
         return currentLine is null
-            ? Reply<OrderLine>.None( $"Order line for order id {orderId} and order line id {orderId} not found." )
-            : Reply<OrderLine>.With( currentLine );
+            ? Reply<OrderLine>.Failure( $"Order line for order id {orderId} and order line id {orderId} not found." )
+            : Reply<OrderLine>.Success( currentLine );
     }
     static string GenerateOrderEmailBody( Order order, IEnumerable<OrderLine> lines, IReadOnlyDictionary<OrderLine, IEnumerable<OrderItem>> items )
     {

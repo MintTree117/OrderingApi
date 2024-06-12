@@ -1,4 +1,4 @@
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Email;
 

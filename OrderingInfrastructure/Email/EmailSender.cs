@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Email;
 
@@ -39,11 +39,11 @@ internal sealed class EmailSender : InfrastructureService<EmailSender>, IEmailSe
             };
             mailMessage.To.Add( toEmail );
             _smtp.Send( mailMessage );
-            return IReply.Okay();
+            return IReply.Success();
         }
         catch ( Exception e ) {
             Logger.LogError( e, e.Message );
-            return IReply.None( "Failed to send an email with smtp client." );
+            return IReply.Fail( "Failed to send an email with smtp client." );
         }
     }
     static SmtpConfiguration GetSmtpConfiguration( IConfiguration config )

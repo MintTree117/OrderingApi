@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OrderingDomain.Account;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Account.Repositories;
 
@@ -15,8 +15,8 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
         try {
             UserAddress? result = await _database.Addresses.FirstOrDefaultAsync( a => a.Id == addressId );
             return result is not null
-                ? Reply<UserAddress>.With( result )
-                : Reply<UserAddress>.None( $"No address found with id {addressId}." );
+                ? Reply<UserAddress>.Success( result )
+                : Reply<UserAddress>.Failure( $"No address found with id {addressId}." );
         }
         catch ( Exception e ) {
             return HandleDbException<UserAddress>( e );
@@ -29,7 +29,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
                 await _database.Addresses
                         .Where( a => a.UserId == userId )
                         .ToListAsync();
-            return Replies<UserAddress>.With( result );
+            return Replies<UserAddress>.Success( result );
         }
         catch ( Exception e ) {
             return HandleDbExceptionOpts<UserAddress>( e );
@@ -46,7 +46,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
                         .Take( results )
                         .ToListAsync();
             return Reply<PagedResult<UserAddress>>
-                .With( PagedResult<UserAddress>
+                .Success( PagedResult<UserAddress>
                     .With( totalCount, result ) );
         }
         catch ( Exception e ) {
@@ -72,7 +72,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             UserAddress? model = await _database.Addresses.FirstOrDefaultAsync( a => a.Id == address.Id );
 
             if (model is null)
-                return IReply.None( "Address id not found." );
+                return IReply.Fail( "Address id not found." );
 
             model.Address = address.Address;
             model.IsPrimary = address.IsPrimary;

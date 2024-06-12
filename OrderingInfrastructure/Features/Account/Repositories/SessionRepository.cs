@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OrderingDomain.Account;
-using OrderingDomain.Optionals;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Account.Repositories;
 
@@ -18,7 +18,7 @@ internal sealed class SessionRepository( AccountDbContext database, ILogger<Sess
                 await _database.Sessions
                     .Where( s => s.UserId == userId )
                     .ToListAsync();
-            return Replies<UserSession>.With( result );
+            return Replies<UserSession>.Success( result );
         }
         catch ( Exception e )
         {
@@ -31,7 +31,7 @@ internal sealed class SessionRepository( AccountDbContext database, ILogger<Sess
         {
             UserSession? session = await _database.Sessions.FirstOrDefaultAsync( s => s.Id == sessionId );
             if (session is null)
-                return Reply<bool>.None( "Session not found." );
+                return Reply<bool>.Failure( "Session not found." );
             
             
             _database.Sessions.Remove( session );

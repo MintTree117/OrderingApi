@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Optionals;
 using OrderingDomain.Orders;
+using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;
 
@@ -63,8 +63,8 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
         try {
             Order? order = await _database.ActiveOrders.FirstOrDefaultAsync( o => o.Id == orderId );
             return order is not null
-                ? Reply<Order>.With( order )
-                : Reply<Order>.None( $"Order {orderId} not found in db." );
+                ? Reply<Order>.Success( order )
+                : Reply<Order>.Failure( $"Order {orderId} not found in db." );
         }
         catch ( Exception e ) {
             return HandleDbException<Order>( e );
@@ -73,7 +73,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     public async Task<Replies<OrderLine>> GetOrderLinesByOrderId( Guid orderId )
     {
         try {
-            return Replies<OrderLine>.With(
+            return Replies<OrderLine>.Success(
                 await _database.ActiveOrderLines.Where( l => l.OrderId == orderId ).ToListAsync() );
         }
         catch ( Exception e ) {
@@ -83,7 +83,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     public async Task<Replies<OrderItem>> GetItemsForLineById( Guid orderId, Guid orderLineId )
     {
         try {
-            return Replies<OrderItem>.With(
+            return Replies<OrderItem>.Success(
                 await _database.ActiveOrderItems.Where( i => i.OrderId == orderId && i.OrderLineId == orderLineId ).ToListAsync() );
         }
         catch ( Exception e ) {
@@ -96,12 +96,12 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             Dictionary<OrderLine, IEnumerable<OrderItem>> items = [];
 
             foreach ( OrderLine l in lines )
-                if ((await GetItemsForLineById( l.OrderId, l.Id )).Fail( out Replies<OrderItem> itemsResult ))
-                    return Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>.None( itemsResult );
+                if ((await GetItemsForLineById( l.OrderId, l.Id )).OutFailure( out Replies<OrderItem> itemsResult ))
+                    return Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>.Failure( itemsResult );
                 else
                     items.TryAdd( l, itemsResult.Enumerable );
 
-            return Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>.With( items );
+            return Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>.Success( items );
         }
         catch ( Exception e ) {
             return HandleDbException<Dictionary<OrderLine, IEnumerable<OrderItem>>>( e );

@@ -1,5 +1,5 @@
-using OrderingDomain.Optionals;
 using OrderingDomain.Orders;
+using OrderingDomain.ReplyTypes;
 using OrderingInfrastructure.Email;
 using OrderingInfrastructure.Features.Ordering.Repositories;
 
@@ -35,28 +35,28 @@ internal sealed class OrderStateFlaggingService( IServiceProvider serviceProvide
     }
     async Task HandleDelayedOrderLines( Services s )
     {
-        if ((await GetOrderDelayedTimeSpans( s )).Fails( out var opt )) {
-            Console.WriteLine( opt.Message() );
+        if (!(await GetOrderDelayedTimeSpans( s )).OutSuccess( out var opt )) {
+            Console.WriteLine( opt.GetMessage() );
             return;
         }
 
         if ((await s.UtilRepo.GetTopUnhandledDelayedOrderLines( _config.MaxDelayedIterationsPerExecution, 8 ))
-            .Fail( out Replies<OrderLine> ordersOpt ))
-            Console.WriteLine( ordersOpt.Message() );
+            .OutFailure( out Replies<OrderLine> ordersOpt ))
+            Console.WriteLine( ordersOpt.GetMessage() );
 
         foreach ( OrderLine o in ordersOpt.Enumerable )
             await HandleDelayedOrderLines( o, s );
     }
     async Task HandleExpiredOrderLines( Services s )
     {
-        if ((await GetOrderExpiredTimeSpans( s )).Fails( out var opt )) {
-            Console.WriteLine( opt.Message() );
+        if (!(await GetOrderExpiredTimeSpans( s )).OutSuccess( out var opt )) {
+            Console.WriteLine( opt.GetMessage() );
             return;
         }
 
         if ((await s.UtilRepo.GetTopUnhandledExpiredOrderLines( _config.MaxExpiredIterationsPerExecution, 8 ))
-            .Fail( out Replies<OrderLine> ordersOpt ))
-            Console.WriteLine( ordersOpt.Message() );
+            .OutFailure( out Replies<OrderLine> ordersOpt ))
+            Console.WriteLine( ordersOpt.GetMessage() );
 
         foreach ( OrderLine o in ordersOpt.Enumerable )
             await HandleExpiredOrderLines( o, s );
@@ -67,8 +67,8 @@ internal sealed class OrderStateFlaggingService( IServiceProvider serviceProvide
             return;
 
         o.Delayed = true;
-        if ((await s.UtilRepo.SaveAsync()).Fails( out Reply<bool> saveResult ))
-            Console.WriteLine( saveResult.Message() );
+        if (!(await s.UtilRepo.SaveAsync()).OutSuccess( out Reply<bool> saveResult ))
+            Console.WriteLine( saveResult.GetMessage() );
 
         await NotifyCustomerOfDelay( o, s );
     }
@@ -88,16 +88,16 @@ internal sealed class OrderStateFlaggingService( IServiceProvider serviceProvide
 
     static async Task NotifyCustomerOfDelay( OrderLine o, Services s )
     {
-        if ((await s.Repo.GetOrderById( o.OrderId )).Fails( out Reply<Order> order )) {
-            Console.WriteLine( order.Message() );
+        if (!(await s.Repo.GetOrderById( o.OrderId )).OutSuccess( out Reply<Order> order )) {
+            Console.WriteLine( order.GetMessage() );
             return;
         }
         s.Email.SendBasicEmail( order.Data.CustomerEmail, "Order Line Delayed", $"Unfortunately, your order line {o.Id} of order {order.Data.Id} has been delayed. It is currently {o.State}" );
     }
     static async Task NotifyCustomerOfProblem( OrderProblem problem, Services s )
     {
-        if ((await s.Repo.GetOrderById( problem.OrderId )).Fails( out Reply<Order> order )) {
-            Console.WriteLine( order.Message() );
+        if (!(await s.Repo.GetOrderById( problem.OrderId )).OutSuccess( out Reply<Order> order )) {
+            Console.WriteLine( order.GetMessage() );
             return;
         }
         s.Email.SendBasicEmail( order.Data.CustomerEmail, "Order Problem Encountered", $"Unfortunately, a problem has occured for order line {problem.OrderLineId} of order {problem.OrderId}. An admin has been notified. Please contact support for more information." );
@@ -113,25 +113,25 @@ internal sealed class OrderStateFlaggingService( IServiceProvider serviceProvide
     }
     async Task<Reply<bool>> GetOrderDelayedTimeSpans( Services services )
     {
-        if ((await services.UtilRepo.GetDelayTimes()).Fail( out Replies<OrderStateDelayTime> delays ))
-            return IReply.None( delays.Message() );
+        if ((await services.UtilRepo.GetDelayTimes()).OutFailure( out Replies<OrderStateDelayTime> delays ))
+            return IReply.Fail( delays.GetMessage() );
 
         _orderDelayTimespans.Clear();
         foreach ( OrderStateDelayTime delayTime in delays.Enumerable )
             _orderDelayTimespans.TryAdd( delayTime.State, delayTime.DelayTime );
 
-        return IReply.Okay();
+        return IReply.Success();
     }
     async Task<Reply<bool>> GetOrderExpiredTimeSpans( Services services )
     {
-        if ((await services.UtilRepo.GetExpiryTimes()).Fail( out Replies<OrderStateExpireTime> expires ))
-            return IReply.None( expires.Message() );
+        if ((await services.UtilRepo.GetExpiryTimes()).OutFailure( out Replies<OrderStateExpireTime> expires ))
+            return IReply.Fail( expires.GetMessage() );
 
         _orderExpireTimespans.Clear();
         foreach ( OrderStateExpireTime expireTIme in expires.Enumerable )
             _orderExpireTimespans.TryAdd( expireTIme.State, expireTIme.ExpiryTime );
 
-        return IReply.Okay();
+        return IReply.Success();
     }
 
     sealed class OrderStateFlaggingConfiguration
