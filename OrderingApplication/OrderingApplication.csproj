@@ -28,7 +28,6 @@
         </AssemblyAttribute>
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="Features\Account\TwoFactor\" />
       <Folder Include="Features\Authentication\" />
     </ItemGroup>
 

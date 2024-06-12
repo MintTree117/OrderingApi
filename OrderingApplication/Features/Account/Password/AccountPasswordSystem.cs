@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Identity;
-using OrderingApplication.Features.Account.Recovery.Types;
+using OrderingApplication.Features.Account.Password.Types;
 using OrderingApplication.Features.Account.Utilities;
 using OrderingDomain.Account;
 using OrderingDomain.Optionals;
 using OrderingInfrastructure.Email;
 
-namespace OrderingApplication.Features.Account.Recovery.Systems;
+namespace OrderingApplication.Features.Account.Password;
 
-internal sealed class PasswordRecoverySystem( IdentityConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender )
+internal sealed class AccountPasswordSystem( IdentityConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender )
 {
     readonly IdentityConfigCache _configCache = configCache;
     readonly UserManager<UserAccount> _userManager = userManager;

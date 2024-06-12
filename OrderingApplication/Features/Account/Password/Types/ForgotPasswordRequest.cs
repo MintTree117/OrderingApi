@@ -1,4 +1,4 @@
-namespace OrderingApplication.Features.Account.Recovery;
+namespace OrderingApplication.Features.Account.Password.Types;
 
 internal readonly record struct ForgotPasswordRequest(
     string Email );

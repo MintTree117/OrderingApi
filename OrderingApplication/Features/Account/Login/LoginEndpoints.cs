@@ -17,17 +17,20 @@ internal static class LoginEndpoints
     
     internal static void MapLoginEndpoints( this IEndpointRouteBuilder app )
     {
-        app.MapPost( "api/identity/login", static async ( [FromBody] LoginRequest request, HttpContext http, IdentityConfigCache config, LoginSystem system ) =>
+        app.MapPost( "api/account/login", static async ( [FromBody] LoginRequest request, HttpContext http, IdentityConfigCache config, LoginSystem system ) =>
             await Login( request, http, config, system ) );
         
-        app.MapPost( "api/identity/login2Fa", static async ( [FromBody] TwoFactorRequest request, HttpContext http, IdentityConfigCache config, LoginSystem system ) =>
+        app.MapPost( "api/account/login2Fa", static async ( [FromBody] TwoFactorRequest request, HttpContext http, IdentityConfigCache config, Login2FaSystem system ) =>
+            await Login2Fa( request, http, config, system ) );
+
+        app.MapPost( "api/account/loginRecovery", static async ( [FromBody] TwoFactorRequest request, HttpContext http, IdentityConfigCache config, Login2FaSystem system ) =>
             await Login2Fa( request, http, config, system ) );
         
-        app.MapGet( "api/identity/refresh", static async ( HttpContext http, LoginRefreshSystem refresher ) =>
+        app.MapGet( "api/account/loginRefresh", static async ( HttpContext http, LoginRefreshSystem refresher ) =>
             await refresher.GetAccessToken( http.UserId() ) )
             .RequireAuthorization( Cookies );
         
-        app.MapPut( "api/identity/logout", static async ( [FromBody] string refreshToken, HttpContext http ) =>
+        app.MapPut( "api/account/logout", static async ( [FromBody] string refreshToken, HttpContext http ) =>
             await http.SignOutAsync( CookieAuthenticationDefaults.AuthenticationScheme ) )
             .RequireAuthorization( Cookies );
     }
@@ -40,7 +43,7 @@ internal static class LoginEndpoints
 
         return await SignInHttpCookies( jwtResult.Data.AccessToken ?? string.Empty, config.JwtConfigRules, http, jwtResult.Data );
     }
-    static async Task<IResult> Login2Fa( TwoFactorRequest request, HttpContext http, IdentityConfigCache config, LoginSystem system )
+    static async Task<IResult> Login2Fa( TwoFactorRequest request, HttpContext http, IdentityConfigCache config, Login2FaSystem system )
     {
         Reply<TwoFactorResponse> twoFaReply = await system.Login2Factor( request );
         if (!twoFaReply.IsSuccess)

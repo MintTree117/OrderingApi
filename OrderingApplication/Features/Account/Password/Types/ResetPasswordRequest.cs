@@ -1,4 +1,4 @@
-namespace OrderingApplication.Features.Account.Recovery.Types;
+namespace OrderingApplication.Features.Account.Password.Types;
 
 internal readonly record struct ResetPasswordRequest(
     string Email,

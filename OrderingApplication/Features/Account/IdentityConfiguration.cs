@@ -32,7 +32,8 @@ internal static class IdentityConfiguration
                .AddAuthorization( GetAuthorizationOptions );
         builder.Services.AddSingleton<IdentityConfigCache>();
         builder.Services.AddScoped<LoginSystem>();
-        builder.Services.AddScoped<Registration.Systems.AccountRegisterSystem>();
+        builder.Services.AddScoped<AccountConfirmationSystem>();
+        builder.Services.AddScoped<AccountRegisterSystem>();
         builder.Services.AddScoped<AccountProfileManager>();
         builder.Services.AddScoped<AccountSecurityManager>();
         builder.Services.AddScoped<UserAddressManager>();
