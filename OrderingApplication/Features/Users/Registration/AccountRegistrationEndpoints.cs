@@ -36,6 +36,6 @@ internal static class AccountRegistrationEndpoints
     static async Task<IResult> RegisterAccount( RegisterAccountRequest request, AccountRegistrationSystem system )
     {
         var reply = await system.RegisterAccount( request );
-        return reply.GetIResult();
+        return Results.Ok( true );
     }
 }

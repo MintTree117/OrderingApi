@@ -14,7 +14,7 @@ internal sealed class AccountRegistrationSystem( UserConfigCache configCache, Us
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly IEmailSender _emailSender = emailSender;
     
-    internal async Task<IReply> RegisterAccount( RegisterAccountRequest request )
+    internal async Task<Reply<bool>> RegisterAccount( RegisterAccountRequest request )
     {
         var userReply = await CreateIdentity( request );
         if (!userReply.CheckSuccess())
