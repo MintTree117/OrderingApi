@@ -6,36 +6,29 @@ using OrderingDomain.Users;
 
 namespace OrderingApplication.Features.Users.Registration.Systems;
 
-internal sealed class AccountRegistrationSystem( AccountConfig config, UserManager<UserAccount> userManager, AccountConfirmationSystem accountSystem )
+internal sealed class AccountRegistrationSystem( UserConfigCache configCache, UserManager<UserAccount> userManager, AccountConfirmationSystem accountSystem )
 {
-    readonly AccountConfig _config = config;
+    readonly UserConfigCache _configCache = configCache;
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly AccountConfirmationSystem _accountSystem = accountSystem;
     
-    internal async Task<Reply<RegisterAccountResponse>> RegisterAccount( RegisterAccountRequest registerAccount )
+    internal async Task<IReply> RegisterAccount( RegisterAccountRequest request )
     {
-        // CREATION
-        Reply<UserAccount> userReply = await CreateIdentity( registerAccount );
-        if (!userReply.Succeeded)
-            return RegistrationFail( userReply );
+        var userReply = await CreateIdentity( request );
+        if (!userReply.CheckSuccess())
+            return IReply.ServerError( userReply );
         
-        // EMAIL
-        Reply<bool> emailReply = await _accountSystem.SendEmailConfirmationLink( registerAccount.Email );
-        return emailReply.Succeeded
-            ? RegistrationSuccess( userReply )
-            : RegistrationFail( emailReply );
+        await _accountSystem.SendEmailConfirmationLink( request.Email );
+        return IReply.Success(); // return true even if email fails
     }
-    
-    async Task<Reply<UserAccount>> CreateIdentity( RegisterAccountRequest accountRequest )
+    async Task<IReply> CreateIdentity( RegisterAccountRequest request )
     {
-        UserAccount user = new( accountRequest.Email, accountRequest.Username );
-        return (await _userManager.CreateAsync( user, accountRequest.Password ))
-            .Succeeds( out IdentityResult result )
-                ? Reply<UserAccount>.Success( user )
-                : Reply<UserAccount>.Failure( $"Failed to create user. {result.CombineErrors()}" );
+        var user = new UserAccount( request.Email, request.Username, request.Phone );
+        var created = (await _userManager.CreateAsync( user, request.Password ))
+            .SucceedsOut( out IdentityResult result );
+        return created
+            ? Reply<UserAccount>.Success( user )
+            : Reply<UserAccount>.Failure( $"Failed to create user. {result.CombineErrors()}" );
+
     }
-    static Reply<RegisterAccountResponse> RegistrationFail( IReply? reply = null ) =>
-        Reply<RegisterAccountResponse>.Failure( "Failed to register account." + reply );
-    static Reply<RegisterAccountResponse> RegistrationSuccess( Reply<UserAccount> user ) =>
-        Reply<RegisterAccountResponse>.Success( RegisterAccountResponse.With( user.Data ) );
 }

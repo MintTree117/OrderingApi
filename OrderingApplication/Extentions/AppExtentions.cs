@@ -17,7 +17,7 @@ internal static class AppExtentions
     }
     internal static void MapEndpoints( this WebApplication app )
     {
-        app.MapIdentityEndpoints();
+        app.MapUserEndpoints();
         app.MapBillingEndpoints();
         app.MapCartEndpoints();
         app.MapOrderingEndpoints();

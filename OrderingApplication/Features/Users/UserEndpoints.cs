@@ -7,9 +7,9 @@ using OrderingApplication.Features.Users.Security;
 
 namespace OrderingApplication.Features.Users;
 
-internal static class AccountEndpoints
+internal static class UserEndpoints
 {
-    internal static void MapIdentityEndpoints( this IEndpointRouteBuilder app )
+    internal static void MapUserEndpoints( this IEndpointRouteBuilder app )
     {
         app.MapAuthenticationEndpoints();
         app.MapRegistrationEndpoints();

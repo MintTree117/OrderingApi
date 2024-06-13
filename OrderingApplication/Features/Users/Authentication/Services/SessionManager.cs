@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using OrderingApplication.Features.Users.Utilities;
 using OrderingDomain.ReplyTypes;
@@ -7,9 +6,9 @@ using OrderingInfrastructure.Features.Account.Repositories;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 
-internal sealed class SessionManager( AccountConfig config, UserManager<UserAccount> userManager, ISessionRepository sessions )
+internal sealed class SessionManager( UserConfigCache configCache, UserManager<UserAccount> userManager, ISessionRepository sessions )
 {
-    readonly JwtConfig _jwtConfig = config.JwtConfigRules;
+    readonly JwtConfig _jwtConfig = configCache.JwtConfigRules;
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly ISessionRepository _sessions = sessions;
     
@@ -26,7 +25,7 @@ internal sealed class SessionManager( AccountConfig config, UserManager<UserAcco
         session.Data.LastActive = DateTime.Now;
         await _sessions.SaveAsync();
         
-        JwtUtils.GenerateAccessToken( userReply.Data, _jwtConfig, out string accessToken, out ClaimsPrincipal claimsPrincipal );
+        JwtUtils.GenerateAccessToken( userReply.Data, _jwtConfig, out string accessToken );
         return Reply<string>.Success( accessToken );
     }
     internal async Task<IReply> AddSession( string sessionId, string userId )

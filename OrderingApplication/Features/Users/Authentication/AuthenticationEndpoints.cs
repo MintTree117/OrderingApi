@@ -5,15 +5,8 @@ using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Authentication.Services;
 using OrderingApplication.Features.Users.Authentication.Types;
 using OrderingDomain.ReplyTypes;
-using ResetPasswordRequest = OrderingApplication.Features.Users.Authentication.Types.ResetPasswordRequest;
-using LoginRequest = OrderingApplication.Features.Users.Authentication.Types.LoginRequest;
-using TwoFactorRequest = OrderingApplication.Features.Users.Authentication.Types.TwoFactorRequest;
 
 namespace OrderingApplication.Features.Users.Authentication;
-
-using LoginRequest = Types.LoginRequest;
-using ResetPasswordRequest = Types.ResetPasswordRequest;
-using TwoFactorRequest = Types.TwoFactorRequest;
 
 internal static class AuthenticationEndpoints
 {
@@ -21,46 +14,43 @@ internal static class AuthenticationEndpoints
     
     internal static void MapAuthenticationEndpoints( this IEndpointRouteBuilder app )
     {
-        app.MapPost( "api/account/authenticate/login",
+        app.MapPost( "api/authenticate/login",
             static async ( [FromBody] LoginRequest request, HttpContext http, LoginManager login, SessionManager sessions ) =>
             await Login( request, http, login, sessions ) );
         
-        app.MapPost( "api/account/authenticate/2fa", 
+        app.MapPost( "api/authenticate/2fa", 
             static async ( [FromBody] TwoFactorRequest request, HttpContext http, LoginManager system, SessionManager sessions ) =>
             await Login2Fa( request, http, system, sessions ) );
 
-        app.MapPost( "api/account/authenticate/recover", 
+        app.MapPost( "api/authenticate/recover", 
             static async ( [FromBody] LoginRecoveryRequest request, LoginManager manager ) =>
             await LoginRecovery( request, manager ) );
 
-        app.MapPut( "api/account/forgot", 
+        app.MapPost( "api/authenticate/refresh",
+            static async ( HttpContext http, SessionManager sessions ) =>
+                await SessionRefresh( http, sessions ) )
+            .RequireAuthorization( Cookies );
+
+        app.MapPut( "api/authenticate/forgot", 
             static async ( [FromBody] string email, PasswordResetter resetter ) =>
             await SendResetEmail( email, resetter ) );
 
-        app.MapPut( "api/account/reset",
+        app.MapPut( "api/authenticate/reset",
             static async ( [FromBody] ResetPasswordRequest request, PasswordResetter resetter ) =>
             await ResetPassword( request, resetter ) );
 
-        app.MapGet( "api/account/authenticate/refresh",
-                static async ( HttpContext http, SessionManager sessions ) =>
-                    await SessionRefresh( http, sessions ) )
-            .RequireAuthorization( Cookies );
-
-        app.MapPut( "api/account/authenticate/logout",
-                static async ( HttpContext http, SessionManager sessions ) =>
-                    await SessionRevoke( http, sessions ) )
+        app.MapPut( "api/authenticate/logout",
+            static async ( HttpContext http, SessionManager sessions ) =>
+                await SessionRevoke( http, sessions ) )
             .RequireAuthorization( Cookies );
     }
     
     static async Task<IResult> Login( LoginRequest request, HttpContext http, LoginManager manager, SessionManager sessions )
     {
         var loginReply = await manager.Login( request );
-
         if (!loginReply || loginReply.Data.IsPending2Fa)
             return loginReply.GetIResult();
-
-        await http.SignInAsync( loginReply.Data.ClaimsPrincipal! );
-
+        
         return await HandleLoginReply( loginReply, http, sessions );
     }
     static async Task<IResult> Login2Fa( TwoFactorRequest request, HttpContext http, LoginManager manager, SessionManager sessions )
@@ -105,7 +95,7 @@ internal static class AuthenticationEndpoints
         return sessionReply.GetIResult();
     }
 
-    static async Task<IResult> HandleLoginReply( Reply<LoginModel> loginReply, HttpContext http, SessionManager sessions )
+    static async Task<IResult> HandleLoginReply( Reply<LoginInfo> loginReply, HttpContext http, SessionManager sessions )
     {
         await http.SignInAsync( loginReply.Data.ClaimsPrincipal! );
         await sessions.AddSession( http.Session.Id, http.UserId() );

@@ -6,20 +6,20 @@ using OrderingDomain.Users;
 
 namespace OrderingApplication.Features.Users.Profile;
 
-internal sealed class AccountProfileManager( UserManager<UserAccount> users )
+internal sealed class AccountProfileManager( UserManager<UserAccount> userManager )
 {
-    readonly UserManager<UserAccount> _users = users;
+    readonly UserManager<UserAccount> _userManager = userManager;
 
     internal async Task<Reply<ViewProfileResponse>> ViewProfile( string userId )
     {
-        UserAccount? user = await _users.FindByIdAsync( userId );
+        var user = await _userManager.FindByIdAsync( userId );
         return user is not null
             ? Reply<ViewProfileResponse>.Success( ViewProfileResponse.With( user ) )
             : Reply<ViewProfileResponse>.UserNotFound();
     }
     internal async Task<Reply<bool>> UpdateProfile( string userId, UpdateProfileRequest update )
     {
-        UserAccount? user = await _users.FindByIdAsync( userId );
+        var user = await _userManager.FindByIdAsync( userId );
         if (user is null)
             return IReply.UserNotFound();
 
@@ -27,8 +27,8 @@ internal sealed class AccountProfileManager( UserManager<UserAccount> users )
         user.Email = update.Email;
         user.PhoneNumber = update.Phone;
         
-        IdentityResult updateResult = await _users.UpdateAsync( user );
-        return updateResult.Succeeds()
+        var updateResult = await _userManager.UpdateAsync( user );
+        return updateResult.SucceedsOut()
             ? IReply.Success()
             : IReply.ChangesNotSaved();
     }

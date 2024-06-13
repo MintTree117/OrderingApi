@@ -17,7 +17,7 @@ using OrderingInfrastructure.Features.Account;
 
 namespace OrderingApplication.Features.Users;
 
-internal static class IdentityConfiguration
+internal static class UserConfiguration
 {
     internal static void ConfigureUsers( this WebApplicationBuilder builder )
     {
@@ -31,7 +31,7 @@ internal static class IdentityConfiguration
                .AddJwtBearer( options => GetJwtOptions( options, builder ) );
         builder.Services
                .AddAuthorization( GetAuthorizationOptions );
-        builder.Services.AddSingleton<AccountConfig>();
+        builder.Services.AddSingleton<UserConfigCache>();
         builder.Services.AddScoped<LoginManager>();
         builder.Services.AddScoped<AccountConfirmationSystem>();
         builder.Services.AddScoped<AccountRegistrationSystem>();

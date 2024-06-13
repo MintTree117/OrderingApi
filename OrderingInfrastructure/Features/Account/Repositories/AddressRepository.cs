@@ -35,19 +35,19 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             return HandleDbExceptionReplies<UserAddress>( e );
         }
     }
-    public async Task<Reply<PagedResult<UserAddress>>> GetPagedAddresses( string userId, int page, int results )
+    public async Task<Reply<PagedResult<UserAddress>>> GetPagedAddresses( string userId, int page, int pageSize )
     {
         try {
             int totalCount = await _database.Addresses.CountAsync( a => a.UserId == userId );
-            List<UserAddress> result =
+            List<UserAddress> addresses =
                 await _database.Addresses
                         .Where( a => a.UserId == userId )
-                        .Skip( results * GetPage( page ) )
-                        .Take( results )
+                        .Skip( pageSize * GetPage( page ) )
+                        .Take( pageSize )
                         .ToListAsync();
             return Reply<PagedResult<UserAddress>>
                 .Success( PagedResult<UserAddress>
-                    .With( totalCount, result ) );
+                    .With( totalCount, addresses ) );
         }
         catch ( Exception e ) {
             return HandleDbExceptionReply<PagedResult<UserAddress>>( e );
@@ -56,7 +56,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
         static int GetPage( int page ) =>
             Math.Max( 0, page - 1 );
     }
-    public async Task<Reply<bool>> AddAddress( UserAddress address )
+    public async Task<IReply> AddAddress( UserAddress address )
     {
         try {
             await _database.Addresses.AddAsync( address );
@@ -66,13 +66,12 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             return HandleDbExceptionReply<bool>( e );
         }
     }
-    public async Task<Reply<bool>> UpdateAddress( UserAddress address )
+    public async Task<IReply> UpdateAddress( UserAddress address )
     {
         try {
-            UserAddress? model = await _database.Addresses.FirstOrDefaultAsync( a => a.Id == address.Id );
-
+            var model = await _database.Addresses.FirstOrDefaultAsync( a => a.Id == address.Id );
             if (model is null)
-                return IReply.Fail( "Address id not found." );
+                return IReply.NotFound();
 
             model.Address = address.Address;
             model.IsPrimary = address.IsPrimary;
@@ -84,7 +83,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             return HandleDbExceptionReply<bool>( e );
         }
     }
-    public async Task<Reply<bool>> DeleteAddress( UserAddress address )
+    public async Task<IReply> DeleteAddress( UserAddress address )
     {
         try {
             _database.Addresses.Remove( address );

@@ -5,113 +5,116 @@ using OrderingApplication.Features.Users.Utilities;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
 using OrderingInfrastructure.Email;
-using OrderingInfrastructure.Features.Account.Repositories;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 
-internal sealed class LoginManager( AccountConfig config, UserManager<UserAccount> userManager, IEmailSender emailSender, ISessionRepository sessions )
+internal sealed class LoginManager( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender )
 {
-    readonly JwtConfig _jwtConfig = config.JwtConfigRules;
+    const string EmailTokenProvider = "Email";
+    const string EmailTokenName = "ConfirmEmailToken";
+    
+    readonly JwtConfig _jwtConfig = configCache.JwtConfigRules;
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly IEmailSender _emailSender = emailSender;
     readonly bool _requiresConfirmedEmail = userManager.Options.SignIn.RequireConfirmedEmail;
     
     // LOGIN
-    internal async Task<Reply<LoginModel>> Login( LoginRequest request )
+    internal async Task<Reply<LoginInfo>> Login( LoginRequest request )
     {        
         var user = await ValidateLogin( request );
         if (!user)
-            return Reply<LoginModel>.Failure( await _userManager.ProcessAccessFailure( user.Data ) );
+            return Reply<LoginInfo>.Failure( await _userManager.ProcessAccessFailure( user.Data ) );
 
         if (await _userManager.Is2FaRequired( user.Data ))
             return await GenerateAndSend2FaCode( user );
 
         JwtUtils.GenerateAccessToken( user.Data, _jwtConfig, out string token, out ClaimsPrincipal principal );
-        return Reply<LoginModel>.Success( LoginModel.LoggedIn( token, principal ) );
+        return Reply<LoginInfo>.Success( LoginInfo.LoggedIn( token, principal ) );
     }
     async Task<Reply<UserAccount>> ValidateLogin( LoginRequest login )
     {
-        Reply<bool> validationResult = IReply.Success();
-
-        bool validated =
+        IReply validationResult = IReply.Success();
+        var validated =
             (await _userManager.FindByEmailOrUsername( login.EmailOrUsername )).OutSuccess( out Reply<UserAccount> userResult ) &&
             (await _userManager.IsAccountValid( userResult, _requiresConfirmedEmail )).OutSuccess( out validationResult ) &&
             await _userManager.CheckPasswordAsync( userResult.Data, login.Password ) &&
             (await ClearAccessFailCount( userResult )).OutSuccess( out validationResult );
-
+        
         return validated
             ? userResult
-            : Reply<UserAccount>.Failure( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
+            : Reply<UserAccount>.Invalid( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
     }
-    async Task<Reply<bool>> ClearAccessFailCount( Reply<UserAccount> user )
+    async Task<IReply> ClearAccessFailCount( Reply<UserAccount> user )
     {
-        IdentityResult result = await _userManager.ResetAccessFailedCountAsync( user.Data );
+        var result = await _userManager.ResetAccessFailedCountAsync( user.Data );
         return result.Succeeded
             ? IReply.Success()
-            : IReply.Fail( $"Failed to reset access count: {result.CombineErrors()}" );
+            : IReply.ServerError( $"Failed to reset access count: {result.CombineErrors()}" );
     }
-    async Task<Reply<LoginModel>> GenerateAndSend2FaCode( Reply<UserAccount> user )
+    async Task<Reply<LoginInfo>> GenerateAndSend2FaCode( Reply<UserAccount> user )
     {
         bool generated2Fa =
-            (await Set2FaToken( user.Data )).OutSuccess( out Reply<bool> problem ) &&
+            (await Set2FaToken( user.Data )).OutSuccess( out IReply problem ) &&
             (await Send2FaEmail( user.Data )).OutSuccess( out problem );
         
         return generated2Fa
-            ? Reply<LoginModel>.Success( LoginModel.Pending2Fa() )
-            : Reply<LoginModel>.Failure( problem );
+            ? Reply<LoginInfo>.Success( LoginInfo.Pending2Fa() )
+            : Reply<LoginInfo>.Failure( problem );
     }
-    async Task<Reply<bool>> Send2FaEmail( UserAccount user )
+    async Task<IReply> Send2FaEmail( UserAccount user )
     {
-        const string header = "Verify your login";
-        string code = IdentityUtils.WebEncode( await _userManager.GenerateTwoFactorTokenAsync( user, "Email" ) );
-        string body = $@"
-                    <p>Your two-factor verification code is:</p>
-                    <p style='font-size: 24px; font-weight: bold;'>{code}</p>
-                    <p>Please enter this code to verify your login. If you did not request this, please ignore this email.</p>
-                    <p>Best regards,<br/>The Team</p>";
-        body = IdentityUtils.GenerateFormattedEmail( user, header, body );
-        return _emailSender.SendHtmlEmail( user.Email ?? string.Empty, header, body );
+        const string subject = "Verify your login";
+        string code = UserUtils.WebEncode( await _userManager.GenerateTwoFactorTokenAsync( user, EmailTokenProvider ) );
+        string body =
+            $"""
+             <p>Your two-factor verification code is:</p>
+             <p style='font-size: 24px; font-weight: bold;'>{code}</p>
+             <p>Please enter this code to verify your login. If you did not request this, please ignore this email.</p>
+             """;
+        string email = UserUtils.GenerateFormattedEmail( user, subject, body );
+        return _emailSender.SendHtmlEmail( user.Email ?? string.Empty, subject, email );
     }
-    async Task<Reply<bool>> Set2FaToken( UserAccount user )
+    async Task<IReply> Set2FaToken( UserAccount user )
     {
-        IdentityResult result = await _userManager.SetAuthenticationTokenAsync( user, "Email", "Two Factor Token", await _userManager.GenerateTwoFactorTokenAsync( user, "Email" ) );
-
-        return result.Succeeded
+        var token = await _userManager.GenerateTwoFactorTokenAsync( user, EmailTokenProvider );
+        var setResult = await _userManager.SetAuthenticationTokenAsync( user, EmailTokenProvider, EmailTokenName, token );
+        return setResult.Succeeded
             ? IReply.Success()
-            : IReply.Fail( "Failed to set authentication token." );
+            : IReply.ServerError( setResult.CombineErrors() );
     }
     
     // LOGIN 2FA
-    internal async Task<Reply<LoginModel>> Login2Factor( TwoFactorRequest request )
+    internal async Task<Reply<LoginInfo>> Login2Factor( TwoFactorRequest request )
     {
         var user = await Validate2Factor( request );
         if (user)
-            return Reply<LoginModel>.Failure( await _userManager.ProcessAccessFailure( user.Data ) );
+            return Reply<LoginInfo>.Invalid( await _userManager.ProcessAccessFailure( user.Data ) );
 
         JwtUtils.GenerateAccessToken( user.Data, _jwtConfig, out string token, out ClaimsPrincipal principal );
-        return Reply<LoginModel>.Success( LoginModel.LoggedIn( token, principal ) );
+        return Reply<LoginInfo>.Success( LoginInfo.LoggedIn( token, principal ) );
     }
     async Task<Reply<UserAccount>> Validate2Factor( TwoFactorRequest twoFactor )
     {
-        Reply<bool> validationResult = IReply.Success();
-        bool validated =
+        IReply validationResult = IReply.Success();
+        var validated =
             (await _userManager.FindByEmailOrUsername( twoFactor.EmailOrUsername )).OutSuccess( out Reply<UserAccount> userResult ) &&
             (await _userManager.IsAccountValid( userResult, _requiresConfirmedEmail )).OutSuccess( out validationResult ) &&
             (await IsTwoFactorValid( userResult.Data, twoFactor )).OutSuccess( out validationResult );
 
         return validated
             ? userResult
-            : Reply<UserAccount>.Failure( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
+            : Reply<UserAccount>.Invalid( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
     }
-    async Task<Reply<bool>> IsTwoFactorValid( UserAccount user, TwoFactorRequest twoFactor )
+    async Task<IReply> IsTwoFactorValid( UserAccount user, TwoFactorRequest twoFactor )
     {
-        bool valid =
+        var code = UserUtils.WebDecode( twoFactor.Code );
+        var valid =
             !string.IsNullOrWhiteSpace( twoFactor.Code ) &&
-            await _userManager.VerifyTwoFactorTokenAsync( user, "Email", twoFactor.Code );
-
+            await _userManager.VerifyTwoFactorTokenAsync( user, EmailTokenProvider, code );
+            
         return valid
             ? IReply.Success()
-            : IReply.Fail( "Access token is invalid." );
+            : IReply.Invalid( "Access token is invalid." );
     }
     
     // LOGIN RECOVERY
@@ -119,14 +122,14 @@ internal sealed class LoginManager( AccountConfig config, UserManager<UserAccoun
     {
         var user = await ValidateRecoveryLogin( request );
         if (!user)
-            return Reply<string>.Failure( await _userManager.ProcessAccessFailure( user.Data ) );
+            return Reply<string>.NotFound( await _userManager.ProcessAccessFailure( user.Data ) );
         
         JwtUtils.GenerateAccessToken( user.Data, _jwtConfig, out string token, out ClaimsPrincipal principal );
         return Reply<string>.Success( token );
     }
     async Task<Reply<UserAccount>> ValidateRecoveryLogin( LoginRecoveryRequest request )
     {
-        Reply<bool> validationResult = IReply.Success();
+        IReply validationResult = IReply.Success();
 
         bool validated =
             (await _userManager.FindByEmailOrUsername( request.EmailOrUsername )).OutSuccess( out Reply<UserAccount> userResult ) &&
@@ -135,6 +138,6 @@ internal sealed class LoginManager( AccountConfig config, UserManager<UserAccoun
 
         return validated
             ? userResult
-            : Reply<UserAccount>.Failure( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
+            : Reply<UserAccount>.Invalid( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
     }
 }
