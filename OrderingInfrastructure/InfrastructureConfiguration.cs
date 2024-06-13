@@ -4,7 +4,7 @@ using OrderingInfrastructure.Email;
 using OrderingInfrastructure.Http;
 using OrderingInfrastructure.Features.Billing;
 using OrderingInfrastructure.Features.Cart;
-using OrderingInfrastructure.Features.Account;
+using OrderingInfrastructure.Features.Users;
 using OrderingInfrastructure.Features.Ordering;
 
 namespace OrderingInfrastructure;
@@ -16,7 +16,7 @@ public static class InfrastructureConfiguration
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSingleton<IEmailSender, EmailSender>();
         builder.Services.AddSingleton<IHttpService, HttpService>();
-        builder.ConfigureIdentityInfrastructure();
+        builder.ConfigureUserInfrastructure();
         builder.ConfigureOrderingInfrastructure();
         builder.ConfigureCartInfrastructure();
         builder.ConfigureBillingInfrastructure();

@@ -11,5 +11,4 @@ internal sealed class JwtConfig
     public bool ValidateIssuer { get; set; } = false;
     public bool ValidateIssuerSigningKey { get; set; } = true;
     public TimeSpan AccessLifetime { get; set; }
-    public TimeSpan RefreshLifetime { get; set; }
 }

@@ -1,11 +1,24 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using OrderingApplication.Features.Users.Utilities;
 using OrderingDomain.ReplyTypes;
 
 namespace OrderingApplication.Extentions;
 
 internal static class UtilityExtentions
 {
+    internal static void LogReplyError<T>( this ILogger<T> logger, IReply reply )
+    {
+        if (!reply.CheckSuccess())
+            logger.LogError( reply.GetMessage() );
+    }
+    internal static void LogIdentityResultError<T>( this ILogger<T> logger, IdentityResult identityResult )
+    {
+        if (!identityResult.Succeeded)
+            logger.LogError( identityResult.CombineErrors() );
+    }
+    
     internal static string GetOrThrow( this IConfiguration configuration, string section ) =>
         configuration[section] ?? throw new Exception( $"Failed to get {section} from IConfiguration." );
     internal static Exception Exception( this IConfiguration configuration, string section ) =>

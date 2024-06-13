@@ -2,7 +2,7 @@ using OrderingApplication.Features.Users.Addresses.Types;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
 using OrderingDomain.ValueTypes;
-using OrderingInfrastructure.Features.Account.Repositories;
+using OrderingInfrastructure.Features.Users.Repositories;
 
 namespace OrderingApplication.Features.Users.Addresses;
 

@@ -6,7 +6,8 @@ using OrderingDomain.Users;
 
 namespace OrderingApplication.Features.Users.Profile;
 
-internal sealed class AccountProfileManager( UserManager<UserAccount> userManager )
+internal sealed class AccountProfileManager( UserManager<UserAccount> userManager, ILogger<AccountProfileManager> logger )
+    : BaseService<AccountProfileManager>( logger )
 {
     readonly UserManager<UserAccount> _userManager = userManager;
 
@@ -22,12 +23,13 @@ internal sealed class AccountProfileManager( UserManager<UserAccount> userManage
         var user = await _userManager.FindByIdAsync( userId );
         if (user is null)
             return IReply.UserNotFound();
-
+        
         user.UserName = update.Username;
         user.Email = update.Email;
         user.PhoneNumber = update.Phone;
         
         var updateResult = await _userManager.UpdateAsync( user );
+        LogIdentityResultError( updateResult );
         return updateResult.SucceedsOut()
             ? IReply.Success()
             : IReply.ChangesNotSaved();

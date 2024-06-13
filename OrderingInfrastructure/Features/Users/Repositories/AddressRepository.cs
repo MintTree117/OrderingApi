@@ -3,12 +3,12 @@ using Microsoft.Extensions.Logging;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
 
-namespace OrderingInfrastructure.Features.Account.Repositories;
+namespace OrderingInfrastructure.Features.Users.Repositories;
 
-internal sealed class AddressRepository( AccountDbContext database, ILogger<AddressRepository> logger ) 
+internal sealed class AddressRepository( UserDbContext database, ILogger<AddressRepository> logger ) 
     : DatabaseService<AddressRepository>( database, logger ), IAddressRepository
 {
-    readonly AccountDbContext _database = database;
+    readonly UserDbContext _database = database;
     
     public async Task<Reply<UserAddress>> GetAddress( Guid addressId )
     {

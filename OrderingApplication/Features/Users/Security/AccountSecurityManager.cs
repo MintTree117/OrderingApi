@@ -6,7 +6,8 @@ using OrderingDomain.Users;
 
 namespace OrderingApplication.Features.Users.Security;
 
-internal sealed class AccountSecurityManager( UserManager<UserAccount> userManager )
+internal sealed class AccountSecurityManager( UserManager<UserAccount> userManager, ILogger<AccountSecurityManager> logger )
+    : BaseService<AccountSecurityManager>( logger )
 {
     readonly UserManager<UserAccount> _userManager = userManager;
 
@@ -41,6 +42,7 @@ internal sealed class AccountSecurityManager( UserManager<UserAccount> userManag
         user.TwoFactorEmail = request.TwoFactorEmail;
         
         var updateResult = await _userManager.UpdateAsync( user );
+        LogIdentityResultError( updateResult );
         return updateResult.Succeeded
             ? IReply.Success()
             : IReply.ChangesNotSaved();
@@ -50,7 +52,7 @@ internal sealed class AccountSecurityManager( UserManager<UserAccount> userManag
     {
         var changed = (await _userManager.ChangePasswordAsync( user, request.OldPassword, request.NewPassword ))
             .SucceedsOut( out IdentityResult result );
-
+        LogIdentityResultError( result );
         return changed
             ? IReply.Success()
             : IReply.ChangesNotSaved( result.CombineErrors() );

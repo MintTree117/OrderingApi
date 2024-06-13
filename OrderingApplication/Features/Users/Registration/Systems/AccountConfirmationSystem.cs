@@ -7,7 +7,8 @@ using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.Users.Registration.Systems;
 
-internal sealed class AccountConfirmationSystem( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender )
+internal sealed class AccountConfirmationSystem( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<AccountConfirmationSystem> logger )
+    : BaseService<AccountConfirmationSystem>( logger )
 {
     readonly UserConfigCache _configCache = configCache;
     readonly UserManager<UserAccount> _userManager = userManager;
@@ -19,8 +20,9 @@ internal sealed class AccountConfirmationSystem( UserConfigCache configCache, Us
         if (!userReply)
             return IReply.NotFound();
         
-        var emailResult = await SendEmailConfirmationEmail( userReply.Data );
-        return emailResult;
+        var emailReply = await Utils.SendEmailConfirmationEmail( userReply.Data, _userManager, _emailSender, _configCache.ConfirmEmailPage );
+        LogReplyError( emailReply );
+        return emailReply;
     }
     internal async Task<IReply> ConfirmEmail( ConfirmAccountEmailRequest request )
     {
@@ -28,11 +30,10 @@ internal sealed class AccountConfirmationSystem( UserConfigCache configCache, Us
         if (!userReply)
             return IReply.NotFound();
 
-        var confirmed = (await ConfirmEmail( userReply.Data, request.Code ))
-            .OutSuccess( out var confirmReply );
-        return confirmed
+        var confirmed = await ConfirmEmail( userReply.Data, request.Code );
+        return confirmed.CheckSuccess()
             ? IReply.Success()
-            : IReply.Invalid( confirmReply );
+            : IReply.Invalid( "Failed to confirm email." );
     }
 
     async Task<Reply<UserAccount>> ValidateRequest( string email )
@@ -45,38 +46,13 @@ internal sealed class AccountConfirmationSystem( UserConfigCache configCache, Us
             ? Reply<UserAccount>.Conflict( "Email is already confirmed." )
             : Reply<UserAccount>.Success( userReply.Data );
     }
-    async Task<IReply> SendEmailConfirmationEmail( UserAccount user )
-    {
-        const string subject = "Confirm Your Email";
-        var code = UserUtils.WebEncode( await _userManager.GenerateEmailConfirmationTokenAsync( user ) );
-        var body = GenerateConfirmEmailBody( user, subject, code, _configCache.ConfirmEmailPage );
-        var sent = _emailSender
-               .SendHtmlEmail( user.Email ?? string.Empty, subject, body )
-               .OutSuccess( out Reply<bool> emailResult );
-        return sent
-            ? IReply.Success()
-            : IReply.Fail( emailResult );
-    }
     async Task<IReply> ConfirmEmail( UserAccount user, string code )
     {
         var decoded = UserUtils.WebDecode( code );
         var result = await _userManager.ConfirmEmailAsync( user, decoded );
+        LogIdentityResultError( result );
         return result.Succeeded
             ? IReply.Success()
             : IReply.Invalid( result.CombineErrors() );
-    }
-    static string GenerateConfirmEmailBody( UserAccount user, string subject, string code, string returnUrl )
-    {
-        string link = $"{returnUrl}?email={user.Email}&code={code}";
-        string customBody =
-            $"""
-             <p>Thank you for registering with us. Please click the link below to confirm your email address:</p>
-             <p>
-                 <a href='{link}' style='display: inline-block; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007BFF; text-decoration: none; border-radius: 5px;'>Confirm Email</a>
-             </p>
-             <p>If you did not create an account, please ignore this email.</p>
-             """;
-        string body = UserUtils.GenerateFormattedEmail( user, subject, customBody );
-        return body;
     }
 }

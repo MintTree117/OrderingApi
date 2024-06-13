@@ -3,12 +3,12 @@ using Microsoft.Extensions.Logging;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
 
-namespace OrderingInfrastructure.Features.Account.Repositories;
+namespace OrderingInfrastructure.Features.Users.Repositories;
 
-internal sealed class SessionRepository( AccountDbContext database, ILogger<SessionRepository> logger ) 
+internal sealed class SessionRepository( UserDbContext database, ILogger<SessionRepository> logger ) 
     : DatabaseService<SessionRepository>( database, logger ), ISessionRepository
 {
-    readonly AccountDbContext _database = database;
+    readonly UserDbContext _database = database;
 
     public async Task<Replies<UserSession>> GetSessions( string userId )
     {

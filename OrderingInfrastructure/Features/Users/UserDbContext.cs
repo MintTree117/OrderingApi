@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OrderingDomain.Users;
 
-namespace OrderingInfrastructure.Features.Account;
+namespace OrderingInfrastructure.Features.Users;
 
-public sealed class AccountDbContext( DbContextOptions<AccountDbContext> options ) 
+public sealed class UserDbContext( DbContextOptions<UserDbContext> options ) 
     : IdentityDbContext<UserAccount>( options )
 {
     protected override void OnModelCreating( ModelBuilder builder )

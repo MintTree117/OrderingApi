@@ -1,7 +1,7 @@
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
 
-namespace OrderingInfrastructure.Features.Account.Repositories;
+namespace OrderingInfrastructure.Features.Users.Repositories;
 
 public interface ISessionRepository : IEfCoreRepository
 {

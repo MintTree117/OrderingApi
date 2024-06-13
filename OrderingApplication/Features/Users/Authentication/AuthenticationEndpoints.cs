@@ -14,32 +14,32 @@ internal static class AuthenticationEndpoints
     
     internal static void MapAuthenticationEndpoints( this IEndpointRouteBuilder app )
     {
-        app.MapPost( "api/authenticate/login",
+        app.MapPost( "api/authentication/login",
             static async ( [FromBody] LoginRequest request, HttpContext http, LoginManager login, SessionManager sessions ) =>
             await Login( request, http, login, sessions ) );
         
-        app.MapPost( "api/authenticate/2fa", 
+        app.MapPost( "api/authentication/2fa", 
             static async ( [FromBody] TwoFactorRequest request, HttpContext http, LoginManager system, SessionManager sessions ) =>
             await Login2Fa( request, http, system, sessions ) );
 
-        app.MapPost( "api/authenticate/recover", 
+        app.MapPost( "api/authentication/recover", 
             static async ( [FromBody] LoginRecoveryRequest request, LoginManager manager ) =>
             await LoginRecovery( request, manager ) );
 
-        app.MapPost( "api/authenticate/refresh",
+        app.MapPost( "api/authentication/refresh",
             static async ( HttpContext http, SessionManager sessions ) =>
                 await SessionRefresh( http, sessions ) )
             .RequireAuthorization( Cookies );
 
-        app.MapPut( "api/authenticate/forgot", 
+        app.MapPut( "api/authentication/forgot", 
             static async ( [FromBody] string email, PasswordResetter resetter ) =>
             await SendResetEmail( email, resetter ) );
 
-        app.MapPut( "api/authenticate/reset",
+        app.MapPut( "api/authentication/reset",
             static async ( [FromBody] ResetPasswordRequest request, PasswordResetter resetter ) =>
             await ResetPassword( request, resetter ) );
 
-        app.MapPut( "api/authenticate/logout",
+        app.MapPut( "api/authentication/logout",
             static async ( HttpContext http, SessionManager sessions ) =>
                 await SessionRevoke( http, sessions ) )
             .RequireAuthorization( Cookies );

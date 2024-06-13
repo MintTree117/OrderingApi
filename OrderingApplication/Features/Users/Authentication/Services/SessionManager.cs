@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using OrderingApplication.Features.Users.Utilities;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
-using OrderingInfrastructure.Features.Account.Repositories;
+using OrderingInfrastructure.Features.Users.Repositories;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 

@@ -7,13 +7,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using OrderingApplication.Features.Users.Addresses;
 using OrderingApplication.Features.Users.Authentication.Services;
+using OrderingApplication.Features.Users.Delete;
 using OrderingApplication.Features.Users.Profile;
 using OrderingApplication.Features.Users.Registration.Systems;
 using OrderingApplication.Features.Users.Security;
 using OrderingApplication.Features.Users.Utilities;
 using OrderingApplication.Utilities;
 using OrderingDomain.Users;
-using OrderingInfrastructure.Features.Account;
+using OrderingInfrastructure.Features.Users;
 
 namespace OrderingApplication.Features.Users;
 
@@ -23,7 +24,7 @@ internal static class UserConfiguration
     {
         builder.Services
                .AddIdentityCore<UserAccount>( options => GetUserOptions( options, builder.Configuration ) )
-               .AddEntityFrameworkStores<AccountDbContext>()
+               .AddEntityFrameworkStores<UserDbContext>()
                .AddDefaultTokenProviders();
         builder.Services
                .AddAuthentication( GetAuthenticationOptions )
@@ -32,36 +33,39 @@ internal static class UserConfiguration
         builder.Services
                .AddAuthorization( GetAuthorizationOptions );
         builder.Services.AddSingleton<UserConfigCache>();
+        builder.Services.AddScoped<UserAddressManager>();
         builder.Services.AddScoped<LoginManager>();
+        builder.Services.AddScoped<PasswordResetter>();
+        builder.Services.AddScoped<SessionManager>();
+        builder.Services.AddScoped<DeleteAccountSystem>();
+        builder.Services.AddScoped<AccountProfileManager>();
         builder.Services.AddScoped<AccountConfirmationSystem>();
         builder.Services.AddScoped<AccountRegistrationSystem>();
-        builder.Services.AddScoped<AccountProfileManager>();
         builder.Services.AddScoped<AccountSecurityManager>();
-        builder.Services.AddScoped<UserAddressManager>();
     }
 
     static void GetUserOptions( IdentityOptions options, IConfiguration configuration )
     {
-        options.Stores.ProtectPersonalData = configuration.GetSection( "Identity:User:ProtectPersonalData" ).Get<bool>();
+        const string Base = "Users:Account:";
         
-        options.User.RequireUniqueEmail = configuration.GetSection( "Identity:User:RequireConfirmedEmail" ).Get<bool>();
-        options.User.AllowedUserNameCharacters = configuration.GetSection( "Identity:User:AllowedUserNameCharacters" ).Get<string>() ?? "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@";
+        options.Stores.ProtectPersonalData = configuration.GetSection( Base + nameof( options.Stores.ProtectPersonalData ) ).Get<bool>();
         
-        options.SignIn.RequireConfirmedEmail = configuration.GetSection( "Identity:SignIn:RequireConfirmedEmail" ).Get<bool>();
-        options.SignIn.RequireConfirmedAccount = configuration.GetSection( "Identity:SignIn:RequireConfirmedEmail" ).Get<bool>();
-        options.SignIn.RequireConfirmedPhoneNumber = configuration.GetSection( "Identity:SignIn:RequireConfirmedEmail" ).Get<bool>();
-
-        IConfigurationSection passwordSection = configuration.GetSection( "Identity:Validation:PasswordCriteria:" );
-        options.Password.RequiredLength = passwordSection.GetSection( "MinLength" ).Get<int>();
-        options.Password.RequireLowercase = passwordSection.GetSection( "RequireLowercase" ).Get<bool>();
-        options.Password.RequireUppercase = passwordSection.GetSection( "RequireUppercase" ).Get<bool>();
-        options.Password.RequireDigit = passwordSection.GetSection( "RequireDigit" ).Get<bool>();
-        options.Password.RequireNonAlphanumeric = passwordSection.GetSection( "RequireSpecial" ).Get<bool>();
-
-        IConfigurationSection lockoutSection = configuration.GetSection( "Identity:Lockout" );
-        options.Lockout.DefaultLockoutTimeSpan = lockoutSection.GetSection( "DefaultLockoutTimeSpan" ).Get<TimeSpan>();
-        options.Lockout.MaxFailedAccessAttempts = lockoutSection.GetSection( "MaxFailedAccessAttempts" ).Get<int>();
-        options.Lockout.AllowedForNewUsers = lockoutSection.GetSection( "AllowedForNewUsers" ).Get<bool>();
+        options.User.RequireUniqueEmail = configuration.GetSection( Base + nameof( options.User.RequireUniqueEmail ) ).Get<bool>();
+        options.User.AllowedUserNameCharacters = configuration.GetSection( Base + nameof( options.User.AllowedUserNameCharacters ) ).Get<string>() ?? "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@";
+        
+        options.SignIn.RequireConfirmedEmail = configuration.GetSection( Base + nameof( options.SignIn.RequireConfirmedEmail ) ).Get<bool>();
+        options.SignIn.RequireConfirmedAccount = configuration.GetSection( Base + nameof( options.SignIn.RequireConfirmedAccount ) ).Get<bool>();
+        options.SignIn.RequireConfirmedPhoneNumber = configuration.GetSection( Base + nameof( options.SignIn.RequireConfirmedPhoneNumber ) ).Get<bool>();
+        
+        options.Password.RequiredLength = configuration.GetSection( Base + nameof( options.Password.RequiredLength ) ).Get<int>();
+        options.Password.RequireLowercase = configuration.GetSection( Base + nameof( options.Password.RequireLowercase ) ).Get<bool>();
+        options.Password.RequireUppercase = configuration.GetSection( Base + nameof( options.Password.RequireUppercase ) ).Get<bool>();
+        options.Password.RequireDigit = configuration.GetSection( Base + nameof( options.Password.RequireDigit ) ).Get<bool>();
+        options.Password.RequireNonAlphanumeric = configuration.GetSection( Base + nameof( options.Password.RequireNonAlphanumeric ) ).Get<bool>();
+        
+        options.Lockout.DefaultLockoutTimeSpan = configuration.GetSection( Base + nameof( options.Lockout.DefaultLockoutTimeSpan ) ).Get<TimeSpan>();
+        options.Lockout.MaxFailedAccessAttempts = configuration.GetSection( Base + nameof( options.Lockout.MaxFailedAccessAttempts ) ).Get<int>();
+        options.Lockout.AllowedForNewUsers = configuration.GetSection( Base + nameof( options.Lockout.AllowedForNewUsers ) ).Get<bool>();
     }
     static void GetAuthenticationOptions( AuthenticationOptions options )
     {
