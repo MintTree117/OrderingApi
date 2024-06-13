@@ -1,7 +1,7 @@
 using Microsoft.OpenApi.Models;
 using OrderingApplication.Features.Billing;
 using OrderingApplication.Features.Cart;
-using OrderingApplication.Features.User;
+using OrderingApplication.Features.Users;
 using OrderingApplication.Features.Ordering;
 using Swashbuckle.AspNetCore.Filters;
 
