@@ -22,15 +22,15 @@ internal abstract class DatabaseService<TService>( DbContext context, ILogger<TS
         }
         catch ( Exception e )
         {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
-    protected Reply<T> HandleDbException<T>( Exception e )
+    protected Reply<T> HandleDbExceptionReply<T>( Exception e )
     {
         Logger.LogError( e, e.Message );
         return Reply<T>.Failure( MsgDbException );
     }
-    protected Replies<T> HandleDbExceptionOpts<T>( Exception e )
+    protected Replies<T> HandleDbExceptionReplies<T>( Exception e )
     {
         Logger.LogError( e, e.Message );
         return Replies<T>.Fail( MsgDbException );

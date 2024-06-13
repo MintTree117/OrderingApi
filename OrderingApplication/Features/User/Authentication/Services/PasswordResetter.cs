@@ -1,21 +1,21 @@
 using Microsoft.AspNetCore.Identity;
-using OrderingApplication.Features.User.Password.Types;
+using OrderingApplication.Features.User.Authentication.Types;
 using OrderingApplication.Features.User.Utilities;
-using OrderingDomain.Account;
 using OrderingDomain.ReplyTypes;
+using OrderingDomain.Users;
 using OrderingInfrastructure.Email;
 
-namespace OrderingApplication.Features.User.Password;
+namespace OrderingApplication.Features.User.Authentication.Services;
 
-internal sealed class AccountPasswordSystem( AccountConfig config, UserManager<UserAccount> userManager, IEmailSender emailSender )
+internal sealed class PasswordResetter( AccountConfig config, UserManager<UserAccount> userManager, IEmailSender emailSender )
 {
     readonly AccountConfig _config = config;
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly IEmailSender _emailSender = emailSender;
     
-    internal async Task<Reply<bool>> ForgotPassword( ForgotPasswordRequest request )
+    internal async Task<Reply<bool>> ForgotPassword( string email )
     {
-        Reply<UserAccount> userReply = await _userManager.FindByEmail( request.Email );
+        Reply<UserAccount> userReply = await _userManager.FindByEmail( email );
         return userReply.Succeeded
             ? await SendResetEmail( userReply )
             : IReply.Fail( "User not found." );

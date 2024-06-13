@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace OrderingDomain.Account;
+namespace OrderingDomain.Users;
 
 public sealed class UserAccount : IdentityUser
 {

@@ -35,24 +35,70 @@ public readonly record struct Reply<T> : IReply
     public static Reply<T> Failure( Exception ex ) => new( ex );
     public static Reply<T> Failure( Exception ex, string msg ) => new( ex, msg );
     
+    public static Reply<T> NotFound() =>
+        Failure( MsgNotFound );
+    public static Reply<T> NotFound( string msg ) =>
+        Failure( string.Join( msg, MsgNotFound ) );
+    public static Reply<T> NotFound( IReply other ) =>
+        Failure( string.Join( MsgNotFound, other.GetMessage() ) );
+    
     public static Reply<T> UserNotFound() =>
         Failure( MsgUserNotFound );
     public static Reply<T> UserNotFound( string msg ) =>
         Failure( string.Join( msg, MsgUserNotFound ) );
+    public static Reply<T> UserNotFound( IReply other ) =>
+        Failure( string.Join( MsgUserNotFound, other.GetMessage() ) );
 
     public static Reply<T> Invalid() =>
         Failure( MsgValidationFailure );
     public static Reply<T> Invalid( string msg ) =>
         Failure( string.Join( msg, MsgValidationFailure ) );
+    public static Reply<T> Invalid( IReply other ) =>
+        Failure( string.Join( MsgValidationFailure, other.GetMessage() ) );
+
+    public static Reply<T> InvalidPassword() =>
+        Failure( MsgPasswordFailure );
+    public static Reply<T> InvalidPassword( string msg ) =>
+        Failure( string.Join( msg, MsgPasswordFailure ) );
+    public static Reply<T> InvalidPassword( IReply other ) =>
+        Failure( string.Join( MsgPasswordFailure, other.GetMessage() ) );
 
     public static Reply<T> ChangesNotSaved() =>
         Failure( MsgChangesNotSaved );
     public static Reply<T> ChangesNotSaved( string msg ) =>
         Failure( string.Join( msg, MsgChangesNotSaved ) );
+    public static Reply<T> ChangesNotSaved( IReply other ) =>
+        Failure( string.Join( MsgChangesNotSaved, other.GetMessage() ) );
 
-    public const string MsgUserNotFound = "User not found.";
-    public const string MsgValidationFailure = "Validation Failed.";
-    public const string MsgChangesNotSaved = "Failed to save changes to storage.";
+    public static Reply<T> Conflict() =>
+        Failure( MsgConflictError );
+    public static Reply<T> Conflict( string msg ) =>
+        Failure( string.Join( msg, MsgConflictError ) );
+    public static Reply<T> Conflict( IReply other ) =>
+        Failure( string.Join( MsgConflictError, other.GetMessage() ) );
+    
+    public static Reply<T> ServerError() =>
+        Failure( MsgServerError );
+    public static Reply<T> ServerError( string msg ) =>
+        Failure( string.Join( msg, MsgServerError ) );
+    public static Reply<T> ServerError( IReply other ) =>
+        Failure( string.Join( MsgServerError, other.GetMessage() ) );
+
+    public static Reply<T> Unauthorized() =>
+        Failure( MsgUnauthorized );
+    public static Reply<T> Unauthorized( string msg ) =>
+        Failure( string.Join( msg, MsgUnauthorized ) );
+    public static Reply<T> Unauthorized( IReply other ) =>
+        Failure( string.Join( MsgUnauthorized, other.GetMessage() ) );
+
+    const string MsgNotFound = "Request not found.";
+    const string MsgUserNotFound = "User not found.";
+    const string MsgValidationFailure = "Validation failed.";
+    const string MsgPasswordFailure = "Invalid password.";
+    const string MsgChangesNotSaved = "Failed to save changes to storage.";
+    const string MsgConflictError = "A conflict has occured.";
+    const string MsgServerError = "An internal server error occured.";
+    const string MsgUnauthorized = "Unauthorized.";
 
     Reply( T obj )
     {

@@ -1,4 +1,4 @@
-using OrderingDomain.Account;
+using OrderingDomain.Users;
 using OrderingDomain.ValueTypes;
 
 namespace OrderingApplication.Features.User.Addresses.Types;

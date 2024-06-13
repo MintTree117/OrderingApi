@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using OrderingDomain.Account;
+using OrderingDomain.Users;
 
 namespace OrderingInfrastructure.Features.Account;
 

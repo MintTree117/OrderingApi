@@ -30,49 +30,57 @@ public interface IReply
     public static Reply<bool> NotFound( string msg ) =>
         Reply<bool>.Failure( string.Join( msg, MsgNotFound ) );
     public static Reply<bool> NotFound( IReply other ) =>
-        Reply<bool>.Failure( string.Join( other.GetMessage(), MsgNotFound ) );
+        Reply<bool>.Failure( string.Join( MsgNotFound, other.GetMessage() ) );
     
     public static Reply<bool> UserNotFound() =>
         Reply<bool>.Failure( MsgUserNotFound );
     public static Reply<bool> UserNotFound( string msg ) =>
         Reply<bool>.Failure( string.Join( msg, MsgUserNotFound ) );
     public static Reply<bool> UserNotFound( IReply other ) =>
-        Reply<bool>.Failure( string.Join( other.GetMessage(), MsgUserNotFound ) );
+        Reply<bool>.Failure( string.Join( MsgUserNotFound, other.GetMessage() ) );
 
     public static Reply<bool> Invalid() =>
         Reply<bool>.Failure( MsgValidationFailure );
     public static Reply<bool> Invalid( string msg ) =>
         Reply<bool>.Failure( string.Join( msg, MsgValidationFailure ) );
     public static Reply<bool> Invalid( IReply other ) =>
-        Reply<bool>.Failure( string.Join( other.GetMessage(), MsgValidationFailure ) );
+        Reply<bool>.Failure( string.Join( MsgValidationFailure, other.GetMessage() ) );
 
     public static Reply<bool> InvalidPassword() =>
         Reply<bool>.Failure( MsgPasswordFailure );
     public static Reply<bool> InvalidPassword( string msg ) =>
         Reply<bool>.Failure( string.Join( msg, MsgPasswordFailure ) );
     public static Reply<bool> InvalidPassword( IReply other ) =>
-        Reply<bool>.Failure( string.Join( other.GetMessage(), MsgPasswordFailure ) );
+        Reply<bool>.Failure( string.Join( MsgPasswordFailure, other.GetMessage() ) );
 
     public static Reply<bool> ChangesNotSaved() =>
         Reply<bool>.Failure( MsgChangesNotSaved );
     public static Reply<bool> ChangesNotSaved( string msg ) =>
         Reply<bool>.Failure( string.Join( msg, MsgChangesNotSaved ) );
     public static Reply<bool> ChangesNotSaved( IReply other ) =>
-        Reply<bool>.Failure( string.Join( other.GetMessage(), MsgChangesNotSaved ) );
+        Reply<bool>.Failure( string.Join( MsgChangesNotSaved, other.GetMessage() ) );
 
     public static Reply<bool> Conflict() =>
         Reply<bool>.Failure( MsgConflictError );
     public static Reply<bool> Conflict( string msg ) =>
         Reply<bool>.Failure( string.Join( msg, MsgConflictError ) );
     public static Reply<bool> Conflict( IReply other ) =>
-        Reply<bool>.Failure( string.Join( other.GetMessage(), MsgConflictError ) );
+        Reply<bool>.Failure( string.Join( MsgConflictError, other.GetMessage() ) );
     
     public static Reply<bool> ServerError() =>
         Reply<bool>.Failure( MsgServerError );
     public static Reply<bool> ServerError( string msg ) =>
         Reply<bool>.Failure( string.Join( msg, MsgServerError ) );
     public static Reply<bool> ServerError( IReply other ) =>
-        Reply<bool>.Failure( string.Join( other.GetMessage(), MsgServerError ) );
+        Reply<bool>.Failure( string.Join( MsgServerError, other.GetMessage() ) );
+
+    public static Reply<bool> Unauthorized() =>
+        Fail( MsgUnauthorized );
+    public static Reply<bool> Unauthorized( string msg ) =>
+        Fail( string.Join( msg, MsgUnauthorized ) );
+    public static Reply<bool> Unauthorized( IReply other ) =>
+        Fail( string.Join( MsgUnauthorized, other.GetMessage() ) );
+    const string MsgUnauthorized = "Unauthorized.";
 
     public const string MsgNotFound = "Request not found.";
     public const string MsgUserNotFound = "User not found.";

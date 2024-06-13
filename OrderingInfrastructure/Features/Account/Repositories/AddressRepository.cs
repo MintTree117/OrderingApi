@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Account;
 using OrderingDomain.ReplyTypes;
+using OrderingDomain.Users;
 
 namespace OrderingInfrastructure.Features.Account.Repositories;
 
@@ -19,7 +19,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
                 : Reply<UserAddress>.Failure( $"No address found with id {addressId}." );
         }
         catch ( Exception e ) {
-            return HandleDbException<UserAddress>( e );
+            return HandleDbExceptionReply<UserAddress>( e );
         }
     }
     public async Task<Replies<UserAddress>> GetAllAddresses( string userId )
@@ -32,7 +32,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             return Replies<UserAddress>.Success( result );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionOpts<UserAddress>( e );
+            return HandleDbExceptionReplies<UserAddress>( e );
         }
     }
     public async Task<Reply<PagedResult<UserAddress>>> GetPagedAddresses( string userId, int page, int results )
@@ -50,7 +50,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
                     .With( totalCount, result ) );
         }
         catch ( Exception e ) {
-            return HandleDbException<PagedResult<UserAddress>>( e );
+            return HandleDbExceptionReply<PagedResult<UserAddress>>( e );
         }
 
         static int GetPage( int page ) =>
@@ -63,7 +63,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Reply<bool>> UpdateAddress( UserAddress address )
@@ -81,7 +81,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Reply<bool>> DeleteAddress( UserAddress address )
@@ -91,7 +91,7 @@ internal sealed class AddressRepository( AccountDbContext database, ILogger<Addr
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
 }

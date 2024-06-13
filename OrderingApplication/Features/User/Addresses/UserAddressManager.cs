@@ -1,6 +1,6 @@
 using OrderingApplication.Features.User.Addresses.Types;
-using OrderingDomain.Account;
 using OrderingDomain.ReplyTypes;
+using OrderingDomain.Users;
 using OrderingDomain.ValueTypes;
 using OrderingInfrastructure.Features.Account.Repositories;
 

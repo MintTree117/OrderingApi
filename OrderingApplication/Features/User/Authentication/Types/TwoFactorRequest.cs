@@ -1,4 +1,4 @@
-namespace OrderingApplication.Features.User.Login.Types;
+namespace OrderingApplication.Features.User.Authentication.Types;
 
 internal readonly record struct TwoFactorRequest(
     string EmailOrUsername,

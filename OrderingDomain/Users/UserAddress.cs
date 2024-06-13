@@ -1,7 +1,7 @@
 using OrderingDomain._Common;
 using OrderingDomain.ValueTypes;
 
-namespace OrderingDomain.Account;
+namespace OrderingDomain.Users;
 
 public sealed class UserAddress : IEntity
 {

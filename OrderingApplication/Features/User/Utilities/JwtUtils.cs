@@ -1,29 +1,30 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using OrderingDomain.Account;
 using OrderingDomain.ReplyTypes;
+using OrderingDomain.Users;
 
 namespace OrderingApplication.Features.User.Utilities;
 
 internal static class JwtUtils
 {
-    internal static string GenerateAccessToken( UserAccount user, JwtConfig jwtConfig )
+    internal static void GenerateAccessToken( UserAccount user, JwtConfig jwtConfig, out string token, out ClaimsPrincipal claimsPrincipal )
     {
         DateTime expiration = DateTime.UtcNow + jwtConfig.AccessLifetime;
         SigningCredentials credentials = new( jwtConfig.Key, SecurityAlgorithms.HmacSha256 );
         Claim[] claims = [
             new Claim( ClaimTypes.NameIdentifier, user.Id),
             new Claim( ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id )];
-        JwtSecurityToken token = new(
+
+        JwtSecurityToken jwt = new(
             null, // single issuer, no need to validate
             jwtConfig.Audience,
             claims,
             expires: expiration,
             signingCredentials: credentials
         );
-
-        return new JwtSecurityTokenHandler().WriteToken( token );
+        claimsPrincipal = new ClaimsPrincipal( new ClaimsIdentity( claims ) );
+        token = new JwtSecurityTokenHandler().WriteToken( jwt );
     }
     internal static Reply<bool> ParseToken( string? token, JwtConfig config, out ClaimsPrincipal? claimsPrincipal, out JwtSecurityToken? jwt )
     {

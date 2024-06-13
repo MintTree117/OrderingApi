@@ -17,7 +17,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Reply<bool>> InsertPendingCancelLine( OrderLine line )
@@ -27,7 +27,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Reply<bool>> DeletePendingDeleteLine( OrderLine line )
@@ -37,7 +37,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Replies<OrderStateDelayTime>> GetDelayTimes()
@@ -47,7 +47,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
                 await _database.DelayTimes.ToListAsync() );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionOpts<OrderStateDelayTime>( e );
+            return HandleDbExceptionReplies<OrderStateDelayTime>( e );
         }
     }
     public async Task<Replies<OrderStateExpireTime>> GetExpiryTimes()
@@ -57,7 +57,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
                 await _database.ExpireTimes.ToListAsync() );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionOpts<OrderStateExpireTime>( e );
+            return HandleDbExceptionReplies<OrderStateExpireTime>( e );
         }
     }
     public async Task<Replies<OrderLine>> GetTopUnhandledDelayedOrderLines( int amount, int checkHours )
@@ -68,7 +68,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
                     o => !o.Delayed && DateTime.Now - o.LastUpdate > TimeSpan.FromHours( checkHours ) ).ToListAsync() );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionOpts<OrderLine>( e );
+            return HandleDbExceptionReplies<OrderLine>( e );
         }
     }
     public async Task<Replies<OrderLine>> GetTopUnhandledExpiredOrderLines( int amount, int checkHours )
@@ -79,7 +79,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
                     o => !o.Problem && DateTime.Now - o.LastUpdate > TimeSpan.FromHours( checkHours ) ).ToListAsync() );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionOpts<OrderLine>( e );
+            return HandleDbExceptionReplies<OrderLine>( e );
         }
     }
     public async Task<Replies<OrderLine>> GetPendingCancelLines()
@@ -89,7 +89,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
                 await _database.ActiveOrderLines.Where( static o => o.Problem ).ToListAsync() );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionOpts<OrderLine>( e );
+            return HandleDbExceptionReplies<OrderLine>( e );
         }
     }
 }

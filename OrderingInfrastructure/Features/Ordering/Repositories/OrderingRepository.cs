@@ -17,7 +17,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Reply<bool>> InsertOrderLines( IEnumerable<OrderLine> orderLines )
@@ -27,7 +27,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Reply<bool>> InsertOrderItems( IEnumerable<OrderItem> orderItems )
@@ -37,7 +37,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Reply<bool>> DeleteOrderData( Guid orderId )
@@ -55,7 +55,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
     public async Task<Reply<Order>> GetOrderById( Guid orderId )
@@ -67,7 +67,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
                 : Reply<Order>.Failure( $"Order {orderId} not found in db." );
         }
         catch ( Exception e ) {
-            return HandleDbException<Order>( e );
+            return HandleDbExceptionReply<Order>( e );
         }
     }
     public async Task<Replies<OrderLine>> GetOrderLinesByOrderId( Guid orderId )
@@ -77,7 +77,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
                 await _database.ActiveOrderLines.Where( l => l.OrderId == orderId ).ToListAsync() );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionOpts<OrderLine>( e );
+            return HandleDbExceptionReplies<OrderLine>( e );
         }
     }
     public async Task<Replies<OrderItem>> GetItemsForLineById( Guid orderId, Guid orderLineId )
@@ -87,7 +87,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
                 await _database.ActiveOrderItems.Where( i => i.OrderId == orderId && i.OrderLineId == orderLineId ).ToListAsync() );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionOpts<OrderItem>( e );
+            return HandleDbExceptionReplies<OrderItem>( e );
         }
     }
     public async Task<Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>> GetItemsForOrderLines( IEnumerable<OrderLine> lines )
@@ -104,7 +104,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>.Success( items );
         }
         catch ( Exception e ) {
-            return HandleDbException<Dictionary<OrderLine, IEnumerable<OrderItem>>>( e );
+            return HandleDbExceptionReply<Dictionary<OrderLine, IEnumerable<OrderItem>>>( e );
         }
     }
 }

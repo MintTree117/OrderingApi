@@ -1,6 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.WebUtilities;
-using OrderingDomain.Account;
+using OrderingDomain.Users;
 
 namespace OrderingApplication.Features.User.Utilities;
 

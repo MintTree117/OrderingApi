@@ -1,10 +1,8 @@
-using OrderingDomain._Common;
+namespace OrderingDomain.Users;
 
-namespace OrderingDomain.Account;
-
-public sealed class UserSession : IEntity
+public sealed class UserSession
 {
-    public Guid Id { get; set; }
+    public string Id { get; set; } = string.Empty;
     public string UserId { get; set; } = string.Empty;
     public DateTime DateCreated { get; set; }
     public DateTime LastActive { get; set; }

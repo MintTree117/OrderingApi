@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using OrderingApplication.Features.User.Registration.Types;
 using OrderingApplication.Features.User.Utilities;
-using OrderingDomain.Account;
 using OrderingDomain.ReplyTypes;
+using OrderingDomain.Users;
 using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.User.Registration.Systems;

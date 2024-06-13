@@ -6,13 +6,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using OrderingApplication.Features.User.Addresses;
-using OrderingApplication.Features.User.Login.Services;
+using OrderingApplication.Features.User.Authentication.Services;
 using OrderingApplication.Features.User.Profile;
 using OrderingApplication.Features.User.Registration.Systems;
 using OrderingApplication.Features.User.Security;
 using OrderingApplication.Features.User.Utilities;
 using OrderingApplication.Utilities;
-using OrderingDomain.Account;
+using OrderingDomain.Users;
 using OrderingInfrastructure.Features.Account;
 
 namespace OrderingApplication.Features.User;
@@ -32,7 +32,7 @@ internal static class IdentityConfiguration
         builder.Services
                .AddAuthorization( GetAuthorizationOptions );
         builder.Services.AddSingleton<AccountConfig>();
-        builder.Services.AddScoped<LoginSystem>();
+        builder.Services.AddScoped<LoginManager>();
         builder.Services.AddScoped<AccountConfirmationSystem>();
         builder.Services.AddScoped<AccountRegistrationSystem>();
         builder.Services.AddScoped<AccountProfileManager>();

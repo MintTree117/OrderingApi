@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using OrderingApplication.Extentions;
-using OrderingDomain.Account;
 using OrderingDomain.ReplyTypes;
+using OrderingDomain.Users;
 using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.User.Delete;

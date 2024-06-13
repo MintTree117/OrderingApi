@@ -1,8 +1,8 @@
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using OrderingDomain.Account;
 using OrderingDomain.ReplyTypes;
+using OrderingDomain.Users;
 
 namespace OrderingApplication.Features.User.Utilities;
 

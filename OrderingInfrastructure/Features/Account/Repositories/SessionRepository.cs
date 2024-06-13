@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Account;
 using OrderingDomain.ReplyTypes;
+using OrderingDomain.Users;
 
 namespace OrderingInfrastructure.Features.Account.Repositories;
 
@@ -10,7 +10,7 @@ internal sealed class SessionRepository( AccountDbContext database, ILogger<Sess
 {
     readonly AccountDbContext _database = database;
 
-    public async Task<Replies<UserSession>> GetSessionsByUserId( string userId )
+    public async Task<Replies<UserSession>> GetSessions( string userId )
     {
         try
         {
@@ -22,14 +22,43 @@ internal sealed class SessionRepository( AccountDbContext database, ILogger<Sess
         }
         catch ( Exception e )
         {
-            return HandleDbExceptionOpts<UserSession>( e );
+            return HandleDbExceptionReplies<UserSession>( e );
         }
     }
-    public async Task<Reply<bool>> DeleteSession( Guid sessionId )
+    public async Task<Reply<UserSession>> GetSession( string sessionId, string userId )
     {
         try
         {
-            UserSession? session = await _database.Sessions.FirstOrDefaultAsync( s => s.Id == sessionId );
+            var session = await _database.Sessions.FirstOrDefaultAsync( s => s.Id == sessionId && s.UserId == userId );
+            return session is not null
+                ? Reply<UserSession>.Success( session )
+                : Reply<UserSession>.NotFound();
+        }
+        catch ( Exception e )
+        {
+            return HandleDbExceptionReply<UserSession>( e );
+        }
+    }
+    public async Task<IReply> AddSession( UserSession session )
+    {
+        try
+        {
+            var entry = await _database.AddAsync( session );
+            if (entry.State != EntityState.Added)
+                return IReply.Fail( entry.State.ToString() );
+            
+            return await SaveAsync();
+        }
+        catch ( Exception e )
+        {
+            return HandleDbExceptionReply<bool>( e );
+        }
+    }
+    public async Task<IReply> DeleteSession( string sessionId, string userId )
+    {
+        try
+        {
+            UserSession? session = await _database.Sessions.FirstOrDefaultAsync( s => s.Id == sessionId && s.UserId == userId );
             if (session is null)
                 return Reply<bool>.Failure( "Session not found." );
             
@@ -39,8 +68,7 @@ internal sealed class SessionRepository( AccountDbContext database, ILogger<Sess
         }
         catch ( Exception e )
         {
-            return HandleDbException<bool>( e );
+            return HandleDbExceptionReply<bool>( e );
         }
     }
-
 }

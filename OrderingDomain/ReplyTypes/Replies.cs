@@ -37,6 +37,71 @@ public readonly record struct Replies<T> : IReply
     public static Replies<T> Fail( IReply reply ) => new( reply.GetMessage() );
     public static Replies<T> Fail( Exception ex ) => new( ex );
     public static Replies<T> Fail( Exception ex, string msg ) => new( ex, msg );
+    
+    public static Replies<T> NotFound() =>
+        Fail( MsgNotFound );
+    public static Replies<T> NotFound( string msg ) =>
+        Fail( string.Join( msg, MsgNotFound ) );
+    public static Replies<T> NotFound( IReply other ) =>
+        Fail( string.Join( MsgNotFound, other.GetMessage() ) );
+    
+    public static Replies<T> UserNotFound() =>
+        Fail( MsgUserNotFound );
+    public static Replies<T> UserNotFound( string msg ) =>
+        Fail( string.Join( msg, MsgUserNotFound ) );
+    public static Replies<T> UserNotFound( IReply other ) =>
+        Fail( string.Join( MsgUserNotFound, other.GetMessage() ) );
+
+    public static Replies<T> Invalid() =>
+        Fail( MsgValidationFailure );
+    public static Replies<T> Invalid( string msg ) =>
+        Fail( string.Join( msg, MsgValidationFailure ) );
+    public static Replies<T> Invalid( IReply other ) =>
+        Fail( string.Join( MsgValidationFailure, other.GetMessage() ) );
+
+    public static Replies<T> InvalidPassword() =>
+        Fail( MsgPasswordFailure );
+    public static Replies<T> InvalidPassword( string msg ) =>
+        Fail( string.Join( msg, MsgPasswordFailure ) );
+    public static Replies<T> InvalidPassword( IReply other ) =>
+        Fail( string.Join( MsgPasswordFailure, other.GetMessage() ) );
+
+    public static Replies<T> ChangesNotSaved() =>
+        Fail( MsgChangesNotSaved );
+    public static Replies<T> ChangesNotSaved( string msg ) =>
+        Fail( string.Join( msg, MsgChangesNotSaved ) );
+    public static Replies<T> ChangesNotSaved( IReply other ) =>
+        Fail( string.Join( MsgChangesNotSaved, other.GetMessage() ) );
+
+    public static Replies<T> Conflict() =>
+        Fail( MsgConflictError );
+    public static Replies<T> Conflict( string msg ) =>
+        Fail( string.Join( msg, MsgConflictError ) );
+    public static Replies<T> Conflict( IReply other ) =>
+        Fail( string.Join( MsgConflictError, other.GetMessage() ) );
+    
+    public static Replies<T> ServerError() =>
+        Fail( MsgServerError );
+    public static Replies<T> ServerError( string msg ) =>
+        Fail( string.Join( msg, MsgServerError ) );
+    public static Replies<T> ServerError( IReply other ) =>
+        Fail( string.Join( MsgServerError, other.GetMessage() ) );
+
+    public static Replies<T> Unauthorized() =>
+        Fail( MsgUnauthorized );
+    public static Replies<T> Unauthorized( string msg ) =>
+        Fail( string.Join( msg, MsgUnauthorized ) );
+    public static Replies<T> Unauthorized( IReply other ) =>
+        Fail( string.Join( MsgUnauthorized, other.GetMessage() ) );
+
+    const string MsgNotFound = "Request not found.";
+    const string MsgUserNotFound = "User not found.";
+    const string MsgValidationFailure = "Validation failed.";
+    const string MsgPasswordFailure = "Invalid password.";
+    const string MsgChangesNotSaved = "Failed to save changes to storage.";
+    const string MsgConflictError = "A conflict has occured.";
+    const string MsgServerError = "An internal server error occured.";
+    const string MsgUnauthorized = "Unauthorized.";
 
     Replies( IEnumerable<T>? enumerable )
     {
