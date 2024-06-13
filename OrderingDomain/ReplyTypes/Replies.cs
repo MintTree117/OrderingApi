@@ -37,62 +37,69 @@ public readonly record struct Replies<T> : IReply
     public static Replies<T> Fail( IReply reply ) => new( reply.GetMessage() );
     public static Replies<T> Fail( Exception ex ) => new( ex );
     public static Replies<T> Fail( Exception ex, string msg ) => new( ex, msg );
-    
+
     public static Replies<T> NotFound() =>
         Fail( MsgNotFound );
     public static Replies<T> NotFound( string msg ) =>
-        Fail( string.Join( msg, MsgNotFound ) );
+        Fail( $"{MsgNotFound} {msg}" );
     public static Replies<T> NotFound( IReply other ) =>
-        Fail( string.Join( MsgNotFound, other.GetMessage() ) );
-    
+        Fail( $"{MsgNotFound} {other.GetMessage()}" );
+
     public static Replies<T> UserNotFound() =>
         Fail( MsgUserNotFound );
     public static Replies<T> UserNotFound( string msg ) =>
-        Fail( string.Join( msg, MsgUserNotFound ) );
+        Fail( $"{MsgUserNotFound} {msg}" );
     public static Replies<T> UserNotFound( IReply other ) =>
-        Fail( string.Join( MsgUserNotFound, other.GetMessage() ) );
+        Fail( $"{MsgUserNotFound} {other.GetMessage()}" );
 
     public static Replies<T> Invalid() =>
         Fail( MsgValidationFailure );
     public static Replies<T> Invalid( string msg ) =>
-        Fail( string.Join( msg, MsgValidationFailure ) );
+        Fail( $"{MsgValidationFailure} {msg}" );
     public static Replies<T> Invalid( IReply other ) =>
-        Fail( string.Join( MsgValidationFailure, other.GetMessage() ) );
+        Fail( $"{MsgValidationFailure} {other.GetMessage()}" );
 
     public static Replies<T> InvalidPassword() =>
         Fail( MsgPasswordFailure );
     public static Replies<T> InvalidPassword( string msg ) =>
-        Fail( string.Join( msg, MsgPasswordFailure ) );
+        Fail( $"{MsgPasswordFailure} {msg}" );
     public static Replies<T> InvalidPassword( IReply other ) =>
-        Fail( string.Join( MsgPasswordFailure, other.GetMessage() ) );
+        Fail( $"{MsgPasswordFailure} {other.GetMessage()}" );
 
     public static Replies<T> ChangesNotSaved() =>
         Fail( MsgChangesNotSaved );
     public static Replies<T> ChangesNotSaved( string msg ) =>
-        Fail( string.Join( msg, MsgChangesNotSaved ) );
+        Fail( $"{MsgChangesNotSaved} {msg}" );
     public static Replies<T> ChangesNotSaved( IReply other ) =>
-        Fail( string.Join( MsgChangesNotSaved, other.GetMessage() ) );
+        Fail( $"{MsgChangesNotSaved} {other.GetMessage()}" );
 
     public static Replies<T> Conflict() =>
         Fail( MsgConflictError );
     public static Replies<T> Conflict( string msg ) =>
-        Fail( string.Join( msg, MsgConflictError ) );
+        Fail( $"{MsgConflictError} {msg}" );
     public static Replies<T> Conflict( IReply other ) =>
-        Fail( string.Join( MsgConflictError, other.GetMessage() ) );
-    
+        Fail( $"{MsgConflictError} {other.GetMessage()}" );
+
     public static Replies<T> ServerError() =>
         Fail( MsgServerError );
     public static Replies<T> ServerError( string msg ) =>
-        Fail( string.Join( msg, MsgServerError ) );
+        Fail( $"{MsgServerError} {msg}" );
     public static Replies<T> ServerError( IReply other ) =>
-        Fail( string.Join( MsgServerError, other.GetMessage() ) );
+        Fail( $"{MsgServerError} {other.GetMessage()}" );
 
     public static Replies<T> Unauthorized() =>
         Fail( MsgUnauthorized );
     public static Replies<T> Unauthorized( string msg ) =>
-        Fail( string.Join( msg, MsgUnauthorized ) );
+        Fail( $"{MsgUnauthorized} {msg}" );
     public static Replies<T> Unauthorized( IReply other ) =>
-        Fail( string.Join( MsgUnauthorized, other.GetMessage() ) );
+        Fail( $"{MsgUnauthorized} {other.GetMessage()}" );
+
+    public static Replies<T> BadRequest() =>
+        Fail( MsgBadRequest );
+    public static Replies<T> BadRequest( string msg ) =>
+        Fail( $"{MsgBadRequest} {msg}" );
+    public static Replies<T> BadRequest( IReply other ) =>
+        Fail( $"{MsgBadRequest} {other.GetMessage()}" );
 
     const string MsgNotFound = "Request not found.";
     const string MsgUserNotFound = "User not found.";
@@ -102,6 +109,7 @@ public readonly record struct Replies<T> : IReply
     const string MsgConflictError = "A conflict has occured.";
     const string MsgServerError = "An internal server error occured.";
     const string MsgUnauthorized = "Unauthorized.";
+    public const string MsgBadRequest = "Bad Request.";
 
     Replies( IEnumerable<T>? enumerable )
     {

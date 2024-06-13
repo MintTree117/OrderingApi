@@ -18,7 +18,7 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     // Public Interface (Start)
     internal async Task<Reply<OrderPlaceResponse>> PlaceOrder( OrderPlaceRequest dto )
     {
-        RepliesLine<ItemOrderGroup> groups = new RepliesLine<ItemOrderGroup>();
+        ReplyLine<ItemOrderGroup> groups = new ReplyLine<ItemOrderGroup>();
         bool objIdOrder =
             (await MakeOrder( dto ))
             .OutSuccess( out Reply<Order> order ) &&
@@ -68,9 +68,9 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
         (await MakeOrderItems( o, dto.Items )).OutFailure( out Replies<OrderItem> itemsResult )
             ? await FailMakeOrderItems( o, itemsResult )
             : itemsResult;
-    async Task<RepliesLine<ItemOrderGroup>> MakeOrderLocations( Order o, IEnumerable<OrderItem> items )
+    async Task<ReplyLine<ItemOrderGroup>> MakeOrderLocations( Order o, IEnumerable<OrderItem> items )
     {
-        RepliesLine<ItemOrderGroup> multi = new();
+        ReplyLine<ItemOrderGroup> multi = new();
         foreach ( OrderItem item in items )
             multi.Options.Add( (await FindNearestLocation( o.ShippingAddress, item.ProductId, item.Quantity ))
                 .OutSuccess( out Reply<OrderLocation> opt )
@@ -110,7 +110,7 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
                 ? await SendConfirmationEmailAndReturn( order, orderOption.Enumerable.ToList() )
                 : await CancelOrderRequest( order, orderOption.Enumerable.ToList(), confirmOption );
     }
-    async Task<Reply<OrderPlaceResponse>> HandleConflictedOrder( Order order, RepliesLine<ItemOrderGroup> groups )
+    async Task<Reply<OrderPlaceResponse>> HandleConflictedOrder( Order order, ReplyLine<ItemOrderGroup> groups )
     {
         if ((await CancelOrderRequest( order, null, Reply<bool>.Success( true ) ))
             .OutSuccess( out Reply<OrderPlaceResponse> cancelResult ))

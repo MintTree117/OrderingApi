@@ -11,8 +11,8 @@ builder.ConfigureCors();
 
 WebApplication app = builder.Build();
 
-app.HandleSwagger();
-app.MapEndpoints();
+app.UseSwagger();
+app.UseEndpoints();
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthorization();

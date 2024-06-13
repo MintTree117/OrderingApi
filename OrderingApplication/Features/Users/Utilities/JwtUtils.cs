@@ -12,6 +12,7 @@ internal static class JwtUtils
         DateTime expiration = DateTime.UtcNow + jwtConfig.AccessLifetime;
         SigningCredentials credentials = new( jwtConfig.Key, SecurityAlgorithms.HmacSha256 );
         Claim[] claims = [
+            new Claim( ClaimTypes.Sid, Guid.NewGuid().ToString() ), // session id
             new Claim( ClaimTypes.NameIdentifier, user.Id),
             new Claim( ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id )];
 
@@ -29,6 +30,7 @@ internal static class JwtUtils
         DateTime expiration = DateTime.UtcNow + jwtConfig.AccessLifetime;
         SigningCredentials credentials = new( jwtConfig.Key, SecurityAlgorithms.HmacSha256 );
         Claim[] claims = [
+            new Claim( ClaimTypes.Sid, Guid.NewGuid().ToString() ), // session id
             new Claim( ClaimTypes.NameIdentifier, user.Id ),
             new Claim( ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id )
         ];

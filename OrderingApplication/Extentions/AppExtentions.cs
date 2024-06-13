@@ -7,15 +7,15 @@ namespace OrderingApplication.Extentions;
 
 internal static class AppExtentions
 {
-    internal static void HandleSwagger( this WebApplication app )
+    internal static void UseSwagger( this WebApplication app )
     {
         if (!app.Environment.IsDevelopment()) 
             return;
         
-        app.UseSwagger();
+        SwaggerBuilderExtensions.UseSwagger( app );
         app.UseSwaggerUI();
     }
-    internal static void MapEndpoints( this WebApplication app )
+    internal static void UseEndpoints( this WebApplication app )
     {
         app.MapUserEndpoints();
         app.MapBillingEndpoints();

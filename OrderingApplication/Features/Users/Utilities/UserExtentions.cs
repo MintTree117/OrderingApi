@@ -8,14 +8,14 @@ namespace OrderingApplication.Features.Users.Utilities;
 
 internal static class UserExtentions
 {
-    internal static async Task<IReply> IsAccountValid( this UserManager<UserAccount> userManager, Reply<UserAccount> user, bool requiresConfirmedEmail )
+    internal static async Task<IReply> IsAccountValid( this UserManager<UserAccount> userManager,UserAccount user, bool requiresConfirmedEmail )
     {
-        bool emailConfirmed = !requiresConfirmedEmail || await userManager.IsEmailConfirmedAsync( user.Data );
+        bool emailConfirmed = !requiresConfirmedEmail || await userManager.IsEmailConfirmedAsync( user );
 
         if (!emailConfirmed)
             return IReply.Invalid( "Your account is not confirmed. Please check your email for a confirmation link." );
 
-        if (await userManager.IsLockedOutAsync( user.Data ))
+        if (await userManager.IsLockedOutAsync( user ))
             return IReply.Unauthorized( "Your account is locked. Please try again later." );
 
         return IReply.Success();
@@ -76,7 +76,7 @@ internal static class UserExtentions
     {
         StringBuilder builder = new();
         foreach ( IdentityError e in result.Errors )
-            builder.Append( $"IdentityErrorCode: {e.Code} : Description: {e.Description}" );
+            builder.Append( $"Error: {e.Description} " );
         return builder.ToString();
     }
     internal static bool SucceedsOut( this IdentityResult result, out IdentityResult outResult )

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
@@ -78,7 +79,7 @@ internal static class AuthenticationEndpoints
 
     static async Task<IResult> SessionRefresh( HttpContext http, SessionManager manager )
     {
-        var refreshReply = await manager.GetRefreshedToken( http.Session.Id, http.UserId() );
+        var refreshReply = await manager.GetRefreshedToken( http.SessionId(), http.UserId() );
 
         if (refreshReply)
             return Results.Ok( refreshReply.Data );
@@ -88,15 +89,21 @@ internal static class AuthenticationEndpoints
     }
     static async Task<IResult> SessionRevoke( HttpContext http, SessionManager manager )
     {
-        var sessionReply = await manager.RevokeSession( http.Session.Id, http.UserId() );
+        var sessionReply = await manager.RevokeSession( http.SessionId(), http.UserId() );
         await http.SignOutAsync( CookieAuthenticationDefaults.AuthenticationScheme );
         return sessionReply.GetIResult();
     }
 
     static async Task<IResult> HandleLoginReply( Reply<LoginInfo> loginReply, HttpContext http, SessionManager sessions )
     {
+        // HTTP CONTEXT ISN'T UPDATED RIGHT AWAY
+        string? userId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.Sid )?.Value;
+        string? sessionId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.NameIdentifier )?.Value;
+        if (string.IsNullOrWhiteSpace( userId ) || string.IsNullOrWhiteSpace( sessionId ))
+            return Results.Problem( "An internal server error occured." );
+        
         await http.SignInAsync( loginReply.Data.ClaimsPrincipal! );
-        await sessions.AddSession( http.Session.Id, http.UserId() );
+        await sessions.AddSession( userId, sessionId );
 
         var loginResponse = LoginResponse.LoggedIn( loginReply.Data.AccessToken! );
         return Results.Ok( loginResponse );

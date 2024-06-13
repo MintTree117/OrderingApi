@@ -23,7 +23,9 @@ internal static class UtilityExtentions
         configuration[section] ?? throw new Exception( $"Failed to get {section} from IConfiguration." );
     internal static Exception Exception( this IConfiguration configuration, string section ) =>
         new( $"Failed to get section {section} from IConfiguration." );
-    
+
+    internal static string SessionId( this HttpContext context ) =>
+        context.User.FindFirstValue( ClaimTypes.Sid ) ?? string.Empty;
     internal static string UserId( this HttpContext context ) =>
         context.User.FindFirstValue( ClaimTypes.NameIdentifier ) ?? string.Empty;
     internal static string Email( this HttpContext context ) =>

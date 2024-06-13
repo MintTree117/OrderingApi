@@ -11,7 +11,6 @@ using OrderingApplication.Features.Users.Delete;
 using OrderingApplication.Features.Users.Profile;
 using OrderingApplication.Features.Users.Registration.Systems;
 using OrderingApplication.Features.Users.Security;
-using OrderingApplication.Features.Users.Utilities;
 using OrderingApplication.Utilities;
 using OrderingDomain.Users;
 using OrderingInfrastructure.Features.Users;
@@ -32,6 +31,7 @@ internal static class UserConfiguration
                .AddJwtBearer( options => GetJwtOptions( options, builder ) );
         builder.Services
                .AddAuthorization( GetAuthorizationOptions );
+
         builder.Services.AddSingleton<UserConfigCache>();
         builder.Services.AddScoped<UserAddressManager>();
         builder.Services.AddScoped<LoginManager>();
@@ -51,43 +51,44 @@ internal static class UserConfiguration
         options.Stores.ProtectPersonalData = configuration.GetSection( Base + nameof( options.Stores.ProtectPersonalData ) ).Get<bool>();
         
         options.User.RequireUniqueEmail = configuration.GetSection( Base + nameof( options.User.RequireUniqueEmail ) ).Get<bool>();
-        options.User.AllowedUserNameCharacters = configuration.GetSection( Base + nameof( options.User.AllowedUserNameCharacters ) ).Get<string>() ?? "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@";
-        
         options.SignIn.RequireConfirmedEmail = configuration.GetSection( Base + nameof( options.SignIn.RequireConfirmedEmail ) ).Get<bool>();
         options.SignIn.RequireConfirmedAccount = configuration.GetSection( Base + nameof( options.SignIn.RequireConfirmedAccount ) ).Get<bool>();
         options.SignIn.RequireConfirmedPhoneNumber = configuration.GetSection( Base + nameof( options.SignIn.RequireConfirmedPhoneNumber ) ).Get<bool>();
         
-        options.Password.RequiredLength = configuration.GetSection( Base + nameof( options.Password.RequiredLength ) ).Get<int>();
-        options.Password.RequireLowercase = configuration.GetSection( Base + nameof( options.Password.RequireLowercase ) ).Get<bool>();
-        options.Password.RequireUppercase = configuration.GetSection( Base + nameof( options.Password.RequireUppercase ) ).Get<bool>();
-        options.Password.RequireDigit = configuration.GetSection( Base + nameof( options.Password.RequireDigit ) ).Get<bool>();
-        options.Password.RequireNonAlphanumeric = configuration.GetSection( Base + nameof( options.Password.RequireNonAlphanumeric ) ).Get<bool>();
-        
         options.Lockout.DefaultLockoutTimeSpan = configuration.GetSection( Base + nameof( options.Lockout.DefaultLockoutTimeSpan ) ).Get<TimeSpan>();
         options.Lockout.MaxFailedAccessAttempts = configuration.GetSection( Base + nameof( options.Lockout.MaxFailedAccessAttempts ) ).Get<int>();
         options.Lockout.AllowedForNewUsers = configuration.GetSection( Base + nameof( options.Lockout.AllowedForNewUsers ) ).Get<bool>();
+
+        const string PasswordBase = "Users:Password:";
+        options.Password.RequiredLength = configuration.GetSection( PasswordBase + nameof( options.Password.RequiredLength ) ).Get<int>();
+        options.Password.RequireLowercase = configuration.GetSection( PasswordBase + nameof( options.Password.RequireLowercase ) ).Get<bool>();
+        options.Password.RequireUppercase = configuration.GetSection( PasswordBase + nameof( options.Password.RequireUppercase ) ).Get<bool>();
+        options.Password.RequireDigit = configuration.GetSection( PasswordBase + nameof( options.Password.RequireDigit ) ).Get<bool>();
+        options.Password.RequireNonAlphanumeric = configuration.GetSection( PasswordBase + nameof( options.Password.RequireNonAlphanumeric ) ).Get<bool>();
     }
     static void GetAuthenticationOptions( AuthenticationOptions options )
     {
         options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.RequireAuthenticatedSignIn = false;
     }
     static void GetAuthorizationOptions( AuthorizationOptions options )
     {
         options.AddPolicy( Consts.DefaultPolicy, static policy => {
             policy.AddAuthenticationSchemes( CookieAuthenticationDefaults.AuthenticationScheme, JwtBearerDefaults.AuthenticationScheme );
-            policy.RequireAuthenticatedUser();
+            policy.RequireAssertion( static _ => true ); 
         } );
         
         options.AddPolicy( Consts.CookiePolicy, static policy => {
             policy.AddAuthenticationSchemes( CookieAuthenticationDefaults.AuthenticationScheme );
-            policy.RequireAuthenticatedUser();
+            policy.RequireAssertion( static _ => true ); 
         } );
         
         options.AddPolicy( Consts.JwtPolicy, static policy => {
             policy.AddAuthenticationSchemes( JwtBearerDefaults.AuthenticationScheme );
-            policy.RequireAuthenticatedUser();
+            policy.RequireAssertion( static _ => true ); 
+            //policy.RequireAuthenticatedUser();
         } );
     }
     static void GetCookieOptions( CookieAuthenticationOptions options )

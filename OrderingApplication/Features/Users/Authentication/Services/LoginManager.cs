@@ -22,10 +22,14 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
     
     // LOGIN
     internal async Task<Reply<LoginInfo>> Login( LoginRequest request )
-    {        
-        var user = await ValidateLogin( request );
+    {
+        var user = await _userManager.FindByEmailOrUsername( request.EmailOrUsername );
         if (!user)
-            return await ProcessFailure<LoginInfo>( user );
+            return Reply<LoginInfo>.UserNotFound();
+
+        var login = await ValidateLogin( user.Data, request );
+        if (!login)
+            return await ProcessFailure<LoginInfo>( user.Data, login );
 
         if (await _userManager.Is2FaRequired( user.Data ))
             return await GenerateAndSend2FaCode( user );
@@ -33,22 +37,20 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
         JwtUtils.GenerateAccessToken( user.Data, _jwtConfig, out string token, out ClaimsPrincipal principal );
         return Reply<LoginInfo>.Success( LoginInfo.LoggedIn( token, principal ) );
     }
-    async Task<Reply<UserAccount>> ValidateLogin( LoginRequest login )
+    async Task<Reply<bool>> ValidateLogin( UserAccount user, LoginRequest request )
     {
-        IReply validationResult = IReply.Success();
         var validated =
-            (await _userManager.FindByEmailOrUsername( login.EmailOrUsername )).OutSuccess( out Reply<UserAccount> userResult ) &&
-            (await _userManager.IsAccountValid( userResult, _requiresConfirmedEmail )).OutSuccess( out validationResult ) &&
-            await _userManager.CheckPasswordAsync( userResult.Data, login.Password ) &&
-            (await ClearAccessFailCount( userResult )).OutSuccess( out validationResult );
+            (await _userManager.IsAccountValid( user, _requiresConfirmedEmail )).OutSuccess( out IReply validationResult ) &&
+            await _userManager.CheckPasswordAsync( user, request.Password ) &&
+            (await ClearAccessFailCount( user )).OutSuccess( out validationResult );
         
         return validated
-            ? userResult
-            : Reply<UserAccount>.Invalid( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
+            ? IReply.Success()
+            : IReply.Invalid( validationResult );
     }
-    async Task<IReply> ClearAccessFailCount( Reply<UserAccount> user )
+    async Task<IReply> ClearAccessFailCount( UserAccount user )
     {
-        var result = await _userManager.ResetAccessFailedCountAsync( user.Data );
+        var result = await _userManager.ResetAccessFailedCountAsync( user );
         return result.Succeeded
             ? IReply.Success()
             : IReply.ServerError( $"Failed to reset access count: {result.CombineErrors()}" );
@@ -90,24 +92,26 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
     // LOGIN 2FA
     internal async Task<Reply<LoginInfo>> Login2Factor( TwoFactorRequest request )
     {
-        var user = await Validate2Factor( request );
-        if (user)
-            return await ProcessFailure<LoginInfo>( user );
+        var user = await _userManager.FindByEmailOrUsername( request.EmailOrUsername );
+        if (!user)
+            return Reply<LoginInfo>.UserNotFound();
+
+        var twoFactor = await Validate2Factor( user.Data, request );
+        if (!twoFactor)
+            return await ProcessFailure<LoginInfo>( user.Data, twoFactor );
 
         JwtUtils.GenerateAccessToken( user.Data, _jwtConfig, out string token, out ClaimsPrincipal principal );
         return Reply<LoginInfo>.Success( LoginInfo.LoggedIn( token, principal ) );
     }
-    async Task<Reply<UserAccount>> Validate2Factor( TwoFactorRequest twoFactor )
+    async Task<Reply<bool>> Validate2Factor( UserAccount user, TwoFactorRequest twoFactor )
     {
-        IReply validationResult = IReply.Success();
         var validated =
-            (await _userManager.FindByEmailOrUsername( twoFactor.EmailOrUsername )).OutSuccess( out Reply<UserAccount> userResult ) &&
-            (await _userManager.IsAccountValid( userResult, _requiresConfirmedEmail )).OutSuccess( out validationResult ) &&
-            (await IsTwoFactorValid( userResult.Data, twoFactor )).OutSuccess( out validationResult );
+            (await _userManager.IsAccountValid( user, _requiresConfirmedEmail )).OutSuccess( out IReply validationResult ) &&
+            (await IsTwoFactorValid( user, twoFactor )).OutSuccess( out validationResult );
 
         return validated
-            ? userResult
-            : Reply<UserAccount>.Invalid( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
+            ? IReply.Success()
+            : IReply.Unauthorized( validationResult );
     }
     async Task<IReply> IsTwoFactorValid( UserAccount user, TwoFactorRequest twoFactor )
     {
@@ -118,38 +122,38 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
             
         return valid
             ? IReply.Success()
-            : IReply.Invalid( "Access token is invalid." );
+            : IReply.Unauthorized( "Access token is invalid." );
     }
     
     // LOGIN RECOVERY
     internal async Task<Reply<string>> LoginRecovery( LoginRecoveryRequest request )
     {
-        var user = await ValidateRecoveryLogin( request );
+        var user = await _userManager.FindByEmailOrUsername( request.EmailOrUsername );
         if (!user)
-            return await ProcessFailure<string>( user );
+            return Reply<string>.UserNotFound();
+
+        var login = await ValidateRecoveryLogin( user.Data, request );
+        if (!login)
+            return await ProcessFailure<string>( user.Data, login );
         
         JwtUtils.GenerateAccessToken( user.Data, _jwtConfig, out string token, out ClaimsPrincipal principal );
         return Reply<string>.Success( token );
     }
-    async Task<Reply<UserAccount>> ValidateRecoveryLogin( LoginRecoveryRequest request )
+    async Task<Reply<bool>> ValidateRecoveryLogin( UserAccount user, LoginRecoveryRequest request )
     {
-        IReply validationResult = IReply.Success();
-
         bool validated =
-            (await _userManager.FindByEmailOrUsername( request.EmailOrUsername )).OutSuccess( out Reply<UserAccount> userResult ) &&
-            (await _userManager.IsAccountValid( userResult, _requiresConfirmedEmail )).OutSuccess( out validationResult ) &&
-            (await ClearAccessFailCount( userResult )).OutSuccess( out validationResult );
+            (await _userManager.IsAccountValid( user, _requiresConfirmedEmail )).OutSuccess( out IReply validationResult ) &&
+            (await ClearAccessFailCount( user )).OutSuccess( out validationResult );
 
         return validated
-            ? userResult
-            : Reply<UserAccount>.Invalid( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
+            ? IReply.Success()
+            : IReply.Unauthorized( validationResult );
     }
     
     // SHARED
-    async Task<Reply<T>> ProcessFailure<T>( Reply<UserAccount> user )
+    async Task<Reply<T>> ProcessFailure<T>( UserAccount user, IReply failure )
     {
-        var processReply = await _userManager.ProcessAccessFailure( user.Data );
-        Logger.LogReplyError( user );
+        var processReply = await _userManager.ProcessAccessFailure( user );
         Logger.LogReplyError( processReply );
         return Reply<T>.Unauthorized( "Login Credentials Failed." );
     }
