@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Addresses.Types;
+using OrderingApplication.Utilities;
 using OrderingDomain.ValueTypes;
 
 namespace OrderingApplication.Features.Users.Addresses;
@@ -30,12 +31,14 @@ internal static class UserAddressEndpoints
 
     static async Task<IResult> GetAddresses( int page, int pageSize, HttpContext http, UserAddressManager manager )
     {
+        EndpointLogger.EndpointHit( nameof( GetAddresses ) );
         var getReply = await manager.ViewAddresses( http.UserId(), page, pageSize );
         return getReply.GetIResult();
     }
     static async Task<IResult> AddAddress( Address request, HttpContext http, UserAddressManager manager )
     {
         var getReply = await manager.AddAddress( http.UserId(), request );
+        
         return getReply.GetIResult();
     }
     static async Task<IResult> UpdateAddress( AddressDto request, HttpContext http, UserAddressManager manager )

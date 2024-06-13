@@ -22,7 +22,6 @@ internal sealed class UserConfigCache( IConfiguration configuration )
         ValidateIssuerSigningKey = config.GetSection( JwtBase + nameof( JwtConfig.ValidateIssuerSigningKey ) ).Get<bool>(),
         AccessLifetime = TimeSpan.Parse( config.GetOrThrow( JwtBase + nameof( JwtConfig.AccessLifetime ) ) )
     };
-
     static SymmetricSecurityKey GetJwtKey( IConfiguration config )
     {
         string keyString = config.GetOrThrow( JwtBase + nameof( JwtConfig.Key ) );

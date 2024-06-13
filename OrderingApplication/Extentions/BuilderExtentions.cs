@@ -3,6 +3,7 @@ using OrderingApplication.Features.Billing;
 using OrderingApplication.Features.Cart;
 using OrderingApplication.Features.Users;
 using OrderingApplication.Features.Ordering;
+using OrderingApplication.Utilities;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace OrderingApplication.Extentions;
@@ -14,6 +15,10 @@ internal static class BuilderExtentions
         builder.Logging.ClearProviders();
         builder.Logging.AddConsole();
         builder.Logging.AddDebug();
+        EndpointLogger.Logger = builder.Services
+            .BuildServiceProvider()
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger<EndpointLogger>();
     }
     internal static void ConfigureFeatures( this WebApplicationBuilder builder )
     {
