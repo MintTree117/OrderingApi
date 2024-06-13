@@ -28,8 +28,7 @@ internal static class AuthenticationEndpoints
 
         app.MapPost( "api/authentication/refresh",
             static async ( HttpContext http, SessionManager sessions ) =>
-                await SessionRefresh( http, sessions ) )
-            .RequireAuthorization( Cookies );
+                await SessionRefresh( http, sessions ) ).RequireAuthorization( Cookies );
 
         app.MapPut( "api/authentication/forgot", 
             static async ( [FromBody] string email, PasswordResetter resetter ) =>
@@ -41,8 +40,7 @@ internal static class AuthenticationEndpoints
 
         app.MapPut( "api/authentication/logout",
             static async ( HttpContext http, SessionManager sessions ) =>
-                await SessionRevoke( http, sessions ) )
-            .RequireAuthorization( Cookies );
+                await SessionRevoke( http, sessions ) ).RequireAuthorization( Cookies );
     }
     
     static async Task<IResult> Login( LoginRequest request, HttpContext http, LoginManager manager, SessionManager sessions )

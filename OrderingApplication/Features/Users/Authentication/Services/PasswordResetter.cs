@@ -7,7 +7,8 @@ using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 
-internal sealed class PasswordResetter( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender )
+internal sealed class PasswordResetter( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<PasswordResetter> logger )
+    : BaseService<PasswordResetter>( logger )
 {
     readonly UserConfigCache _configCache = configCache;
     readonly UserManager<UserAccount> _userManager = userManager;
@@ -20,6 +21,7 @@ internal sealed class PasswordResetter( UserConfigCache configCache, UserManager
             return IReply.UserNotFound();
 
         var emailReply = await SendResetEmail( userReply.Data );
+        LogReplyError( emailReply );
         return emailReply
             ? IReply.Success()
             : IReply.ServerError( emailReply );
@@ -32,6 +34,7 @@ internal sealed class PasswordResetter( UserConfigCache configCache, UserManager
 
         var code = UserUtils.WebDecode( request.Code );
         var passwordReply = await _userManager.ResetPasswordAsync( userReply.Data, code, request.NewPassword );
+        LogIdentityResultError( passwordReply );
         return passwordReply.Succeeded
             ? IReply.Success()
             : IReply.InvalidPassword( passwordReply.CombineErrors() );

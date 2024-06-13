@@ -6,33 +6,35 @@ using OrderingInfrastructure.Features.Users.Repositories;
 
 namespace OrderingApplication.Features.Users.Addresses;
 
-internal sealed class UserAddressManager( IAddressRepository addressRepository )
+internal sealed class UserAddressManager( IAddressRepository addressRepository, ILogger<UserAddressManager> logger )
+    : BaseService<UserAddressManager>( logger )
 {
-    readonly IAddressRepository _repo = addressRepository;
+    readonly IAddressRepository _repository = addressRepository;
 
     internal async Task<IReply> AddAddress( string userId, Address address )
     {
-        UserAddress model = new( Guid.Empty, userId, false, address );
+        var model = new UserAddress( Guid.Empty, userId, false, address );
+        var getReply = await _repository.GetAllAddresses( userId );
+        LogReplyError( getReply );
+        if (!getReply)
+            return IReply.ServerError( getReply );
         
-        var addresses = await _repo.GetAllAddresses( userId );
-        
-        if (!addresses)
-            return IReply.ServerError( addresses );
-        
-        if (!addresses.Enumerable.Any())
+        if (!getReply.Enumerable.Any())
             model.IsPrimary = true;
         
-        return await _repo.AddAddress( model );
+        var addReply = await _repository.AddAddress( model );
+        LogReplyError( addReply );
+        return addReply;
     }
     internal async Task<IReply> UpdateAddress( string userId, AddressDto request )
     {
         var model = request.ToModel( userId );
-        var otherAddresses = await _repo.GetAllAddresses( userId ); // Ensure there can only be one primary address at a time
+        var getReply = await _repository.GetAllAddresses( userId ); // Ensure there can only be one primary address at a time
+        LogReplyError( getReply );
+        if (!getReply)
+            return IReply.NotFound( getReply );
 
-        if (!otherAddresses)
-            return IReply.NotFound( otherAddresses );
-
-        var alreadyPrimary = otherAddresses.Enumerable.Any( static a => a.IsPrimary );
+        var alreadyPrimary = getReply.Enumerable.Any( static a => a.IsPrimary );
 
         switch ( model.IsPrimary )
         {
@@ -41,47 +43,54 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository )
             case true when alreadyPrimary:
                 return IReply.Conflict( "There can only be one primary address." );
             case false:
-                return await _repo.UpdateAddress( model );
+                return await _repository.UpdateAddress( model );
         }
 
-        foreach ( UserAddress otherAddress in otherAddresses.Enumerable ) { // Set all other addresses to not be primary
+        foreach ( UserAddress otherAddress in getReply.Enumerable ) { // Set all other addresses to not be primary
             otherAddress.IsPrimary = false;
-            await _repo.UpdateAddress( otherAddress );
+            var updateReply = await _repository.UpdateAddress( otherAddress );
+            LogReplyError( updateReply );
         }
 
-        return await _repo.UpdateAddress( model );
+        var updated = await _repository.UpdateAddress( model );
+        LogReplyError( updated );
+        return updated;
     }
     internal async Task<IReply> DeleteAddress( string userId, Guid addressId )
     {
-        var address = await _repo.GetAddress( addressId );
-        if (!address)
-            return IReply.NotFound( address );
+        var getReply = await _repository.GetAddress( addressId );
+        LogReplyError( getReply );
+        if (!getReply)
+            return IReply.NotFound( getReply );
         
-        var wasPrimary = address.Data.IsPrimary;
-        var deleteResult = await _repo.DeleteAddress( address.Data );
+        var wasPrimary = getReply.Data.IsPrimary;
+        var deleteReply = await _repository.DeleteAddress( getReply.Data );
+        LogReplyError( deleteReply );
 
-        if (!deleteResult.CheckSuccess())
-            return IReply.ServerError( deleteResult );
-
+        if (!deleteReply.CheckSuccess())
+            return IReply.ServerError( deleteReply );
         if (!wasPrimary)
             return IReply.Success();
 
-        var addresses = await _repo.GetAllAddresses( userId );
-        if (addresses && !addresses.Enumerable.Any())
+        var getAllReply = await _repository.GetAllAddresses( userId );
+        LogReplyError( getAllReply );
+        if (getAllReply && !getAllReply.Enumerable.Any())
             return IReply.Success();
 
-        var newPrimary = addresses.Enumerable.First();
+        var newPrimary = getAllReply.Enumerable.First();
         newPrimary.IsPrimary = true;
 
-        await _repo.UpdateAddress( newPrimary );
+        var saveReply = await _repository.SaveAsync();
+        LogReplyError( saveReply );
         return IReply.Success(); // Its still success if deleted but not updated
     }
     internal async Task<Reply<ViewAddressesResponse>> ViewAddresses( string userId, int page, int pageSize )
     {
-        var getReply = await _repo.GetPagedAddresses( userId, page, pageSize );
+        var getReply = await _repository.GetPagedAddresses( userId, page, pageSize );
+        LogReplyError( getReply );
+        if (!getReply)
+            return Reply<ViewAddressesResponse>.NotFound();
         var dtos = AddressDto.FromModels( getReply.Data.Items );
-        return getReply.Succeeded
-            ? Reply<ViewAddressesResponse>.Success( new ViewAddressesResponse( getReply.Data.TotalCount, dtos ) )
-            : Reply<ViewAddressesResponse>.ServerError( getReply );
+        return Reply<ViewAddressesResponse>.Success( new ViewAddressesResponse( getReply.Data.TotalCount, dtos ) );
     }
 }

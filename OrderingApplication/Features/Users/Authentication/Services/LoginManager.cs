@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Authentication.Types;
 using OrderingApplication.Features.Users.Utilities;
 using OrderingDomain.ReplyTypes;
@@ -8,7 +9,8 @@ using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 
-internal sealed class LoginManager( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender )
+internal sealed class LoginManager( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<LoginManager> logger )
+    : BaseService<LoginManager>( logger )
 {
     const string EmailTokenProvider = "Email";
     const string EmailTokenName = "ConfirmEmailToken";
@@ -23,7 +25,7 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
     {        
         var user = await ValidateLogin( request );
         if (!user)
-            return Reply<LoginInfo>.Failure( await _userManager.ProcessAccessFailure( user.Data ) );
+            return await ProcessFailure<LoginInfo>( user );
 
         if (await _userManager.Is2FaRequired( user.Data ))
             return await GenerateAndSend2FaCode( user );
@@ -57,9 +59,19 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
             (await Set2FaToken( user.Data )).OutSuccess( out IReply problem ) &&
             (await Send2FaEmail( user.Data )).OutSuccess( out problem );
         
+        LogReplyError( problem );
+        
         return generated2Fa
             ? Reply<LoginInfo>.Success( LoginInfo.Pending2Fa() )
             : Reply<LoginInfo>.Failure( problem );
+    }
+    async Task<IReply> Set2FaToken( UserAccount user )
+    {
+        var token = await _userManager.GenerateTwoFactorTokenAsync( user, EmailTokenProvider );
+        var setResult = await _userManager.SetAuthenticationTokenAsync( user, EmailTokenProvider, EmailTokenName, token );
+        return setResult.Succeeded
+            ? IReply.Success()
+            : IReply.ServerError( setResult.CombineErrors() );
     }
     async Task<IReply> Send2FaEmail( UserAccount user )
     {
@@ -74,21 +86,13 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
         string email = UserUtils.GenerateFormattedEmail( user, subject, body );
         return _emailSender.SendHtmlEmail( user.Email ?? string.Empty, subject, email );
     }
-    async Task<IReply> Set2FaToken( UserAccount user )
-    {
-        var token = await _userManager.GenerateTwoFactorTokenAsync( user, EmailTokenProvider );
-        var setResult = await _userManager.SetAuthenticationTokenAsync( user, EmailTokenProvider, EmailTokenName, token );
-        return setResult.Succeeded
-            ? IReply.Success()
-            : IReply.ServerError( setResult.CombineErrors() );
-    }
     
     // LOGIN 2FA
     internal async Task<Reply<LoginInfo>> Login2Factor( TwoFactorRequest request )
     {
         var user = await Validate2Factor( request );
         if (user)
-            return Reply<LoginInfo>.Invalid( await _userManager.ProcessAccessFailure( user.Data ) );
+            return await ProcessFailure<LoginInfo>( user );
 
         JwtUtils.GenerateAccessToken( user.Data, _jwtConfig, out string token, out ClaimsPrincipal principal );
         return Reply<LoginInfo>.Success( LoginInfo.LoggedIn( token, principal ) );
@@ -122,7 +126,7 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
     {
         var user = await ValidateRecoveryLogin( request );
         if (!user)
-            return Reply<string>.NotFound( await _userManager.ProcessAccessFailure( user.Data ) );
+            return await ProcessFailure<string>( user );
         
         JwtUtils.GenerateAccessToken( user.Data, _jwtConfig, out string token, out ClaimsPrincipal principal );
         return Reply<string>.Success( token );
@@ -139,5 +143,14 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
         return validated
             ? userResult
             : Reply<UserAccount>.Invalid( $"{userResult.GetMessage()} : {validationResult.GetMessage()}" );
+    }
+    
+    // SHARED
+    async Task<Reply<T>> ProcessFailure<T>( Reply<UserAccount> user )
+    {
+        var processReply = await _userManager.ProcessAccessFailure( user.Data );
+        Logger.LogReplyError( user );
+        Logger.LogReplyError( processReply );
+        return Reply<T>.Unauthorized( "Login Credentials Failed." );
     }
 }

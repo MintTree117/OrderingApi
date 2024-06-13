@@ -6,7 +6,8 @@ using OrderingInfrastructure.Features.Users.Repositories;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 
-internal sealed class SessionManager( UserConfigCache configCache, UserManager<UserAccount> userManager, ISessionRepository sessions )
+internal sealed class SessionManager( UserConfigCache configCache, UserManager<UserAccount> userManager, ISessionRepository sessions, ILogger<SessionManager> logger )
+    : BaseService<SessionManager>( logger )
 {
     readonly JwtConfig _jwtConfig = configCache.JwtConfigRules;
     readonly UserManager<UserAccount> _userManager = userManager;
@@ -20,10 +21,11 @@ internal sealed class SessionManager( UserConfigCache configCache, UserManager<U
 
         var userReply = await _userManager.FindById( userId );
         if (!userReply)
-            return Reply<string>.UserNotFound( userReply );
+            return Reply<string>.UserNotFound();
         
         session.Data.LastActive = DateTime.Now;
-        await _sessions.SaveAsync();
+        var saveReply = await _sessions.SaveAsync();
+        LogReplyError( saveReply );
         
         JwtUtils.GenerateAccessToken( userReply.Data, _jwtConfig, out string accessToken );
         return Reply<string>.Success( accessToken );
@@ -37,12 +39,14 @@ internal sealed class SessionManager( UserConfigCache configCache, UserManager<U
             LastActive = DateTime.Now
         };
 
-        var sessionReply = await _sessions.AddSession( session );
-        return sessionReply;
+        var addReply = await _sessions.AddSession( session );
+        LogReplyError( addReply );
+        return addReply;
     }
     internal async Task<IReply> RevokeSession( string sessionId, string userId )
     {
-        var sessionReply = await _sessions.DeleteSession( sessionId, userId );
-        return sessionReply;
+        var deleteReply = await _sessions.DeleteSession( sessionId, userId );
+        LogReplyError( deleteReply );
+        return deleteReply;
     }
 }

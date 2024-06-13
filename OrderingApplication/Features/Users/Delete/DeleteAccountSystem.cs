@@ -8,7 +8,8 @@ using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.Users.Delete;
 
-internal sealed class DeleteAccountSystem( UserManager<UserAccount> users, IEmailSender emailSender )
+internal sealed class DeleteAccountSystem( UserManager<UserAccount> users, IEmailSender emailSender, ILogger<DeleteAccountSystem> logger )
+    : BaseService<DeleteAccountSystem>( logger )
 {
     readonly UserManager<UserAccount> _users = users;
     readonly IEmailSender _emailSender = emailSender;
@@ -21,11 +22,17 @@ internal sealed class DeleteAccountSystem( UserManager<UserAccount> users, IEmai
 
         if (!await _users.CheckPasswordAsync( user, password ))
             return IReply.InvalidPassword();
-
+        
         var deleteResult = await _users.DeleteAsync( user );
-        return deleteResult.Succeeded
-            ? SendDeletionEmail( user, _emailSender )
-            : IReply.ServerError();
+        LogIdentityResultError( deleteResult );
+
+        if (!deleteResult.Succeeded)
+            return IReply.ServerError( "Failed to delete account." );
+            
+        var emailReply = SendDeletionEmail( user, _emailSender );
+        LogReplyError( emailReply );
+
+        return IReply.Success();
     }
     
     static IReply SendDeletionEmail( UserAccount user, IEmailSender sender )

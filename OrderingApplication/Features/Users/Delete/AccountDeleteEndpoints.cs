@@ -10,9 +10,9 @@ internal static class AccountDeleteEndpoints
 {
     internal static void MapAccountDeleteEndpoints( this IEndpointRouteBuilder app )
     {
-        app.MapDelete( "api/account/delete", static async ( [FromQuery] string password, HttpContext http, DeleteAccountSystem system ) =>
-            await DeleteAccount( password, http, system ) )
-            .RequireAuthorization( Consts.DefaultPolicy );
+        app.MapDelete( "api/account/delete",
+            static async ( [FromQuery] string password, HttpContext http, DeleteAccountSystem system ) =>
+            await DeleteAccount( password, http, system ) ).RequireAuthorization( Consts.DefaultPolicy );
     }
     static async Task<IResult> DeleteAccount( string password, HttpContext http, DeleteAccountSystem system )
     {

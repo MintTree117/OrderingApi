@@ -11,17 +11,41 @@ internal static class UserAddressEndpoints
     
     internal static void MapAccountAddressEndpoints( this IEndpointRouteBuilder app )
     {
-        app.MapGet( "api/account/addresses/view", static async ( [FromQuery] int page, [FromQuery] int pageSize, HttpContext http, UserAddressManager system ) =>
-            (await system.ViewAddresses( http.UserId(), page, pageSize ))
-            .GetIResult() ).RequireAuthorization( CookiesOrJwt );
-        app.MapPut( "api/account/addresses/add", static async ( [FromBody] Address request, HttpContext http, UserAddressManager system ) =>
-            (await system.AddAddress( http.UserId(), request ))
-            .GetIResult() ).RequireAuthorization( CookiesOrJwt );
-        app.MapPut( "api/account/addresses/update", static async ( [FromBody] AddressDto request, HttpContext http, UserAddressManager system ) =>
-            (await system.UpdateAddress( http.UserId(), request ))
-            .GetIResult() ).RequireAuthorization( CookiesOrJwt );
-        app.MapDelete( "api/account/addresses/delete", static async ( [FromQuery] Guid addressId, HttpContext http, UserAddressManager system ) =>
-            (await system.DeleteAddress( http.UserId(), addressId ))
-            .GetIResult() ).RequireAuthorization( CookiesOrJwt );
+        app.MapGet( "api/account/addresses/view",
+            static async ( [FromQuery] int page, [FromQuery] int pageSize, HttpContext http, UserAddressManager manager ) =>
+            await GetAddresses( page, pageSize, http, manager ) ).RequireAuthorization( CookiesOrJwt );
+
+        app.MapPut( "api/account/addresses/add",
+            static async ( [FromBody] Address request, HttpContext http, UserAddressManager manager ) =>
+            await AddAddress( request, http, manager ) ).RequireAuthorization( CookiesOrJwt );
+
+        app.MapPut( "api/account/addresses/update",
+            static async ( [FromBody] AddressDto request, HttpContext http, UserAddressManager manager ) =>
+            await UpdateAddress( request, http, manager ) ).RequireAuthorization( CookiesOrJwt );
+
+        app.MapDelete( "api/account/addresses/delete",
+            static async ( [FromQuery] Guid addressId, HttpContext http, UserAddressManager manager ) =>
+            await DeleteAddress( addressId, http, manager ) ).RequireAuthorization( CookiesOrJwt );
+    }
+
+    static async Task<IResult> GetAddresses( int page, int pageSize, HttpContext http, UserAddressManager manager )
+    {
+        var getReply = await manager.ViewAddresses( http.UserId(), page, pageSize );
+        return getReply.GetIResult();
+    }
+    static async Task<IResult> AddAddress( Address request, HttpContext http, UserAddressManager manager )
+    {
+        var getReply = await manager.AddAddress( http.UserId(), request );
+        return getReply.GetIResult();
+    }
+    static async Task<IResult> UpdateAddress( AddressDto request, HttpContext http, UserAddressManager manager )
+    {
+        var getReply = await manager.UpdateAddress( http.UserId(), request );
+        return getReply.GetIResult();
+    }
+    static async Task<IResult> DeleteAddress( Guid addressId, HttpContext http, UserAddressManager manager )
+    {
+        var getReply = await manager.DeleteAddress( http.UserId(), addressId );
+        return getReply.GetIResult();
     }
 }
