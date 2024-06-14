@@ -96,6 +96,23 @@ internal static class UserConfiguration
         options.ExpireTimeSpan = TimeSpan.FromDays( 1 ); 
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.None;
+        
+        options.Events = new CookieAuthenticationEvents {
+            OnSigningIn = static async context => {
+                var principal = context.Principal;
+                // Add additional claims if necessary
+                await Task.CompletedTask;
+            },
+            OnSignedIn = static async context => {
+                // Optional: Handle post-sign-in actions
+                await Task.CompletedTask;
+            },
+            OnValidatePrincipal = static async context => {
+                // Optional: Validate principal periodically
+                await Task.CompletedTask;
+            }
+        };
     }
     static void GetJwtOptions( JwtBearerOptions options, WebApplicationBuilder builder )
     {

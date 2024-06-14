@@ -16,6 +16,8 @@ internal sealed class SessionManager( UserConfigCache configCache, UserManager<U
     internal async Task<Reply<string>> GetRefreshedToken( string sessionId, string userId )
     {
         var session = await _sessions.GetSession( sessionId, userId );
+        LogReplyError( session );
+        LogError( $"----------------------------------------------------------------------------------------------- {sessionId}" );
         if (!session)
             return Reply<string>.NotFound( "Session doesn't exist." );
 
@@ -38,7 +40,7 @@ internal sealed class SessionManager( UserConfigCache configCache, UserManager<U
             DateCreated = DateTime.Now,
             LastActive = DateTime.Now
         };
-
+        LogError( $"----------------------------------------------------------------------------------------------- {sessionId}" );
         var addReply = await _sessions.AddSession( session );
         LogReplyError( addReply );
         return addReply;

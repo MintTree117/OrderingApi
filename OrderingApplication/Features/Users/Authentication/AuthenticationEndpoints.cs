@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Authentication.Services;
 using OrderingApplication.Features.Users.Authentication.Types;
+using OrderingApplication.Utilities;
 using OrderingDomain.ReplyTypes;
 
 namespace OrderingApplication.Features.Users.Authentication;
@@ -79,6 +80,14 @@ internal static class AuthenticationEndpoints
 
     static async Task<IResult> SessionRefresh( HttpContext http, SessionManager manager )
     {
+        EndpointLogger.LogInformation( "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" );
+        EndpointLogger.LogInformation( "USERID" + http.UserId() );
+        ClaimsPrincipal user = http.User;
+        foreach ( var c in user.Claims )
+        {
+            EndpointLogger.LogInformation( $"CLAIM: {c.Type} : {c.Value}" );
+        }
+
         var refreshReply = await manager.GetRefreshedToken( http.SessionId(), http.UserId() );
 
         if (refreshReply)
@@ -97,13 +106,13 @@ internal static class AuthenticationEndpoints
     static async Task<IResult> HandleLoginReply( Reply<LoginInfo> loginReply, HttpContext http, SessionManager sessions )
     {
         // HTTP CONTEXT ISN'T UPDATED RIGHT AWAY
-        string? userId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.Sid )?.Value;
-        string? sessionId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.NameIdentifier )?.Value;
+        string? userId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.NameIdentifier )?.Value;
+        string? sessionId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.Sid )?.Value;
         if (string.IsNullOrWhiteSpace( userId ) || string.IsNullOrWhiteSpace( sessionId ))
             return Results.Problem( "An internal server error occured." );
         
-        await http.SignInAsync( loginReply.Data.ClaimsPrincipal! );
-        await sessions.AddSession( userId, sessionId );
+        await http.SignInAsync( loginReply.Data.ClaimsPrincipal!, new AuthenticationProperties { IsPersistent = true } );
+        await sessions.AddSession( sessionId, userId );
 
         var loginResponse = LoginResponse.LoggedIn( loginReply.Data.AccessToken! );
         return Results.Ok( loginResponse );
