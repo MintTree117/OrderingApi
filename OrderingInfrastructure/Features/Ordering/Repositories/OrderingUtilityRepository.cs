@@ -17,7 +17,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<bool>> InsertPendingCancelLine( OrderLine line )
@@ -27,7 +27,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<bool>> DeletePendingDeleteLine( OrderLine line )
@@ -37,7 +37,7 @@ internal sealed class OrderingUtilityRepository( OrderingDbContext database, ILo
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
     public async Task<Replies<OrderStateDelayTime>> GetDelayTimes()

@@ -8,8 +8,8 @@ public sealed class Order
     public Guid CustomerId { get; set; } = Guid.Empty;
     public Guid OrderGroupId { get; set; } = Guid.Empty;
     public string CustomerEmail { get; set; } = string.Empty;
-    public Address ShippingAddress { get; set; }
-    public Address BillingAddress { get; set; }
+    public WorldGridPos ShippingWorldGridPos { get; set; }
+    public WorldGridPos BillingWorldGridPos { get; set; }
     public DateTime OrderDate { get; set; } = DateTime.Now;
     public DateTime LastUpdate { get; set; } = DateTime.Now;
     public Pricing Pricing { get; set; }

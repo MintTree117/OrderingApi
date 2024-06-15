@@ -5,23 +5,29 @@ namespace OrderingDomain.Users;
 public sealed class UserAddress
 {
     public UserAddress() { }
-    public UserAddress( Guid id, string userId, bool isPrimary, Address address )
+    public UserAddress( Guid id, string userId, bool isPrimary, string name, WorldGridPos worldGridPos )
     {
         Id = id;
         UserId = userId;
         IsPrimary = isPrimary;
-        Address = address;
+        Name = name;
+        WorldGridPosX = worldGridPos.GridX;
+        WorldGridPosY = worldGridPos.GridY;
     }
-    public UserAddress( Guid id, string userId, bool isPrimary, int posX, int posY )
+    public UserAddress( Guid id, string userId, bool isPrimary, string name, int posX, int posY )
     {
         Id = id;
         UserId = userId;
         IsPrimary = isPrimary;
-        Address = new Address( posX, posY );
+        Name = name;
+        WorldGridPosX = posX;
+        WorldGridPosY = posY;
     }
 
     public Guid Id { get; set; }
     public string UserId { get; set; } = string.Empty;
     public bool IsPrimary { get; set; }
-    public Address Address { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int WorldGridPosX { get; set; }
+    public int WorldGridPosY { get; set; }
 }

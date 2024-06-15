@@ -20,7 +20,7 @@ internal sealed class AccountConfirmationSystem( UserManager<UserAccount> userMa
             return IReply.NotFound();
         
         var emailReply = await Utils.SendEmailConfirmationEmail( userReply.Data, _userManager, _emailSender, UserConsts.Instance.ConfirmEmailPage );
-        LogReplyError( emailReply );
+        LogIfErrorReply( emailReply );
         return emailReply;
     }
     internal async Task<IReply> ConfirmEmail( ConfirmAccountEmailRequest request )
@@ -49,7 +49,7 @@ internal sealed class AccountConfirmationSystem( UserManager<UserAccount> userMa
     {
         var decoded = UserUtils.WebDecode( code );
         var result = await _userManager.ConfirmEmailAsync( user, decoded );
-        LogIdentityResultError( result );
+        LogIfErrorResult( result );
         return result.Succeeded
             ? IReply.Success()
             : IReply.Invalid( result.CombineErrors() );

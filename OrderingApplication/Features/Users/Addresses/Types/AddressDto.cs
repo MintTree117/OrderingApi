@@ -1,13 +1,13 @@
 using OrderingDomain.Users;
-using OrderingDomain.ValueTypes;
 
 namespace OrderingApplication.Features.Users.Addresses.Types;
 
 internal readonly record struct AddressDto(
     Guid Id,
     bool IsPrimary,
-    int GridX,
-    int GridY )
+    string Name,
+    int WorldGridPosX,
+    int WorldGridPosY )
 {
     internal static IEnumerable<AddressDto> FromModels( IEnumerable<UserAddress> models )
     {
@@ -16,7 +16,7 @@ internal readonly record struct AddressDto(
         return dtos;
     }
     internal static AddressDto FromModel( UserAddress model ) =>
-        new( model.Id, model.IsPrimary, model.Address.GridX, model.Address.GridY );
+        new( model.Id, model.IsPrimary, model.Name, model.WorldGridPosX, model.WorldGridPosY );
     internal UserAddress ToModel( string identityId ) =>
-        new( Id, identityId, IsPrimary, new Address( GridX, GridY ) );
+        new( Id, identityId, IsPrimary, Name, WorldGridPosX, WorldGridPosY );
 }

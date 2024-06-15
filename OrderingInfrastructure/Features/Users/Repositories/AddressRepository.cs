@@ -10,19 +10,19 @@ internal sealed class AddressRepository( UserDbContext database, ILogger<Address
 {
     readonly UserDbContext _database = database;
     
-    public async Task<Reply<UserAddress>> GetAddress( Guid addressId )
+    public async Task<Reply<UserAddress>> GetById( Guid addressId )
     {
         try {
             UserAddress? result = await _database.Addresses.FirstOrDefaultAsync( a => a.Id == addressId );
             return result is not null
                 ? Reply<UserAddress>.Success( result )
-                : Reply<UserAddress>.Failure( $"No address found with id {addressId}." );
+                : Reply<UserAddress>.NotFound( $"No address found with id {addressId}." );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<UserAddress>( e );
+            return ProcessDbException<UserAddress>( e );
         }
     }
-    public async Task<Replies<UserAddress>> GetAllAddresses( string userId )
+    public async Task<Replies<UserAddress>> GetAllByUserId( string userId )
     {
         try {
             List<UserAddress> result =
@@ -35,7 +35,7 @@ internal sealed class AddressRepository( UserDbContext database, ILogger<Address
             return HandleDbExceptionReplies<UserAddress>( e );
         }
     }
-    public async Task<Reply<PagedResult<UserAddress>>> GetPagedAddresses( string userId, int page, int pageSize )
+    public async Task<Reply<PagedResult<UserAddress>>> GetAllByUserIdPaged( string userId, int page, int pageSize )
     {
         try {
             int totalCount = await _database.Addresses.CountAsync( a => a.UserId == userId );
@@ -50,47 +50,30 @@ internal sealed class AddressRepository( UserDbContext database, ILogger<Address
                     .With( totalCount, addresses ) );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<PagedResult<UserAddress>>( e );
+            return ProcessDbException<PagedResult<UserAddress>>( e );
         }
 
         static int GetPage( int page ) =>
             Math.Max( 0, page - 1 );
     }
-    public async Task<IReply> AddAddress( UserAddress address )
+    public async Task<Reply<bool>> Add( UserAddress address )
     {
         try {
             await _database.Addresses.AddAsync( address );
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
-    public async Task<IReply> UpdateAddress( UserAddress address )
-    {
-        try {
-            var model = await _database.Addresses.FirstOrDefaultAsync( a => a.Id == address.Id );
-            if (model is null)
-                return IReply.NotFound();
-
-            model.Address = address.Address;
-            model.IsPrimary = address.IsPrimary;
-            
-            _database.Addresses.Update( model );
-            return await SaveAsync();
-        }
-        catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
-        }
-    }
-    public async Task<IReply> DeleteAddress( UserAddress address )
+    public async Task<Reply<bool>> Delete( UserAddress address )
     {
         try {
             _database.Addresses.Remove( address );
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
 }

@@ -1,5 +1,5 @@
 namespace OrderingDomain.ValueTypes;
 
-public readonly record struct Address(
+public readonly record struct WorldGridPos(
     int GridX,
     int GridY );

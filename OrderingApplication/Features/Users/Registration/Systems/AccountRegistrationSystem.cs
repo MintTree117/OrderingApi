@@ -20,7 +20,7 @@ internal sealed class AccountRegistrationSystem( UserManager<UserAccount> userMa
             return IReply.Fail( userReply ); 
         
         var emailReply = await Utils.SendEmailConfirmationEmail( userReply.Data, _userManager, _emailSender, UserConsts.Instance.ConfirmEmailPage );
-        LogReplyError( emailReply );
+        LogIfErrorReply( emailReply );
         return IReply.Success(); // return true even if the email fails; user can execute resends
     }
     async Task<Reply<UserAccount>> CreateIdentity( RegisterAccountRequest request )
@@ -32,7 +32,7 @@ internal sealed class AccountRegistrationSystem( UserManager<UserAccount> userMa
         var user = new UserAccount( request.Email, request.Username, request.Phone );
         var created = await _userManager.CreateAsync( user, request.Password );
         
-        LogIdentityResultError( created );
+        LogIfErrorResult( created );
         
         return created.Succeeded
             ? Reply<UserAccount>.Success( user )

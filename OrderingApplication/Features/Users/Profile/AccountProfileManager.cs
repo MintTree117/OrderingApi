@@ -29,7 +29,7 @@ internal sealed class AccountProfileManager( UserManager<UserAccount> userManage
         user.PhoneNumber = update.Phone;
         
         var updateResult = await _userManager.UpdateAsync( user );
-        LogIdentityResultError( updateResult );
+        LogIfErrorResult( updateResult );
         return updateResult.SucceedsOut()
             ? IReply.Success()
             : IReply.ChangesNotSaved();

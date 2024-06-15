@@ -4,8 +4,8 @@ using OrderingDomain.ValueTypes;
 namespace OrderingApplication.Features.Ordering.Dtos;
 
 internal readonly record struct OrderDto(
-    Address ShippingAddress,
-    Address BillingAddress,
+    WorldGridPos ShippingWorldGridPos,
+    WorldGridPos BillingWorldGridPos,
     bool SaveNewAddress,
     DateTime OrderDate,
     Pricing Pricing,
@@ -13,16 +13,16 @@ internal readonly record struct OrderDto(
     List<OrderGroupDto> OrderGroups )
 {
     internal static Order Model( OrderDto order ) => new() {
-        ShippingAddress = order.ShippingAddress,
-        BillingAddress = order.BillingAddress,
+        ShippingWorldGridPos = order.ShippingWorldGridPos,
+        BillingWorldGridPos = order.BillingWorldGridPos,
         OrderDate = order.OrderDate,
         Pricing = order.Pricing,
         State = OrderState.Processing
     };
     internal static Order Model( OrderDto order, Guid customerId ) => new() {
         CustomerId = customerId,
-        ShippingAddress = order.ShippingAddress,
-        BillingAddress = order.BillingAddress,
+        ShippingWorldGridPos = order.ShippingWorldGridPos,
+        BillingWorldGridPos = order.BillingWorldGridPos,
         OrderDate = order.OrderDate,
         Pricing = order.Pricing,
         State = OrderState.Processing

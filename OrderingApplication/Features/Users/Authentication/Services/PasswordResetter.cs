@@ -20,7 +20,7 @@ internal sealed class PasswordResetter( UserManager<UserAccount> userManager, IE
             return IReply.UserNotFound();
 
         var emailReply = await SendResetEmail( userReply.Data );
-        LogReplyError( emailReply );
+        LogIfErrorReply( emailReply );
         return emailReply
             ? IReply.Success()
             : IReply.ServerError( emailReply );
@@ -33,7 +33,7 @@ internal sealed class PasswordResetter( UserManager<UserAccount> userManager, IE
 
         var code = UserUtils.WebDecode( request.Code );
         var passwordReply = await _userManager.ResetPasswordAsync( userReply.Data, code, request.NewPassword );
-        LogIdentityResultError( passwordReply );
+        LogIfErrorResult( passwordReply );
         return passwordReply.Succeeded
             ? IReply.Success()
             : IReply.InvalidPassword( passwordReply.CombineErrors() );

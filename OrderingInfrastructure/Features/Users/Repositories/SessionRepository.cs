@@ -36,7 +36,7 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
         }
         catch ( Exception e )
         {
-            return HandleDbExceptionReply<UserSession>( e );
+            return ProcessDbException<UserSession>( e );
         }
     }
     public async Task<IReply> AddSession( UserSession session )
@@ -51,7 +51,7 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
         }
         catch ( Exception e )
         {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
     public async Task<IReply> DeleteSession( string sessionId, string userId )
@@ -68,7 +68,7 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
         }
         catch ( Exception e )
         {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
 }

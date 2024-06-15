@@ -17,7 +17,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<bool>> InsertOrderLines( IEnumerable<OrderLine> orderLines )
@@ -27,7 +27,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<bool>> InsertOrderItems( IEnumerable<OrderItem> orderItems )
@@ -37,7 +37,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<bool>> DeleteOrderData( Guid orderId )
@@ -55,7 +55,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return await SaveAsync();
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<bool>( e );
+            return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<Order>> GetOrderById( Guid orderId )
@@ -67,7 +67,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
                 : Reply<Order>.Failure( $"Order {orderId} not found in db." );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<Order>( e );
+            return ProcessDbException<Order>( e );
         }
     }
     public async Task<Replies<OrderLine>> GetOrderLinesByOrderId( Guid orderId )
@@ -104,7 +104,7 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
             return Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>.Success( items );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReply<Dictionary<OrderLine, IEnumerable<OrderItem>>>( e );
+            return ProcessDbException<Dictionary<OrderLine, IEnumerable<OrderItem>>>( e );
         }
     }
 }

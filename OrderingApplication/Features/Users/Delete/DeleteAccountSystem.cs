@@ -24,13 +24,13 @@ internal sealed class DeleteAccountSystem( UserManager<UserAccount> users, IEmai
             return IReply.InvalidPassword();
         
         var deleteResult = await _users.DeleteAsync( user );
-        LogIdentityResultError( deleteResult );
+        LogIfErrorResult( deleteResult );
 
         if (!deleteResult.Succeeded)
             return IReply.ServerError( "Failed to delete account." );
             
         var emailReply = SendDeletionEmail( user, _emailSender );
-        LogReplyError( emailReply );
+        LogIfErrorReply( emailReply );
 
         return IReply.Success();
     }

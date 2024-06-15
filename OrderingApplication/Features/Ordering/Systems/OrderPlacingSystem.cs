@@ -72,7 +72,7 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     {
         ReplyLine<ItemOrderGroup> multi = new();
         foreach ( OrderItem item in items )
-            multi.Options.Add( (await FindNearestLocation( o.ShippingAddress, item.ProductId, item.Quantity ))
+            multi.Options.Add( (await FindNearestLocation( o.ShippingWorldGridPos, item.ProductId, item.Quantity ))
                 .OutSuccess( out Reply<OrderLocation> opt )
                     ? MadeOrderLocation( item, opt.Data )
                     : FailedMakeOrderLocation() );
@@ -164,16 +164,16 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
     }
 
     // Location I/O
-    async Task<Reply<OrderLocation>> FindNearestLocation( Address shippingAddress, Guid productId, int productQuantity ) =>
-        (await CheckLocations( shippingAddress, productId, productQuantity ))
+    async Task<Reply<OrderLocation>> FindNearestLocation( WorldGridPos shippingWorldGridPos, Guid productId, int productQuantity ) =>
+        (await CheckLocations( shippingWorldGridPos, productId, productQuantity ))
         .OutSuccess( out Reply<OrderLocation> location )
             ? LocationFound( location.Data )
             : NoLocationFound( productId, productQuantity );
-    async Task<Reply<OrderLocation>> CheckLocations( Address shippingAddress, Guid productId, int productQuantity )
+    async Task<Reply<OrderLocation>> CheckLocations( WorldGridPos shippingWorldGridPos, Guid productId, int productQuantity )
     {
         OrderLocation? bestLocation = null;
         foreach ( OrderLocation newLocation in _locationService.Cache.Locations )
-            bestLocation = await CheckLocation( newLocation, bestLocation, shippingAddress, productId, productQuantity )
+            bestLocation = await CheckLocation( newLocation, bestLocation, shippingWorldGridPos, productId, productQuantity )
                 ? newLocation
                 : bestLocation;
         
@@ -181,14 +181,14 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
             ? Reply<OrderLocation>.Failure()
             : Reply<OrderLocation>.Success( bestLocation );
     }
-    async Task<bool> CheckLocation( OrderLocation location, OrderLocation? bestLocation, Address shippingAddress, Guid productId, int productQuantity )
+    async Task<bool> CheckLocation( OrderLocation location, OrderLocation? bestLocation, WorldGridPos shippingWorldGridPos, Guid productId, int productQuantity )
     {
         if ((await _locationService.CheckOrderStock( location.Id, productId, productQuantity ))
             .OutSuccess( out Reply<bool> stockResult ))
             return false;
 
-        return location.Address.HeuristicDistanceFrom( shippingAddress )
-                       .IsLessThan( bestLocation?.Address.HeuristicDistanceFrom( shippingAddress ) ?? HeuristicDistance.Max() );
+        return location.WorldGridPos.HeuristicDistanceFrom( shippingWorldGridPos )
+                       .IsLessThan( bestLocation?.WorldGridPos.HeuristicDistanceFrom( shippingWorldGridPos ) ?? HeuristicDistance.Max() );
     }
     async Task<Reply<bool>> ConfirmLocationOrders( IEnumerable<OrderLine> lines )
     {
@@ -207,8 +207,8 @@ internal sealed class OrderPlacingSystem( IOrderingRepository repo, IOrderingUti
             <p>Order ID: {order.Id}</p>
             <p>Order Date: {order.OrderDate}</p>
             <p>Total Price: {order.TotalPrice}</p>
-            <p>Shipping Address: {order.ShippingAddress}</p>
-            <p>Billing Address: {order.BillingAddress}</p>
+            <p>Shipping Address: {order.ShippingWorldGridPos}</p>
+            <p>Billing Address: {order.BillingWorldGridPos}</p>
             <p>Thank you for shopping with us!</p>";
 
         _emailSender.SendBasicEmail( order.CustomerEmail, "Order Confirmation", body );

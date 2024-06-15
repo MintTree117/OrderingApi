@@ -17,7 +17,7 @@ internal sealed class SessionManager( UserManager<UserAccount> userManager, ISes
     internal async Task<Reply<string>> UpdateSession( string sessionId, string userId )
     {
         var session = await _sessions.GetSession( sessionId, userId );
-        LogReplyError( session );
+        LogIfErrorReply( session );
         if (!session)
             return Reply<string>.NotFound( "Session doesn't exist." );
 
@@ -27,7 +27,7 @@ internal sealed class SessionManager( UserManager<UserAccount> userManager, ISes
         
         session.Data.LastActive = DateTime.Now;
         var saveReply = await _sessions.SaveAsync();
-        LogReplyError( saveReply );
+        LogIfErrorReply( saveReply );
         
         JwtUtils.GenerateAccessToken( userReply.Data, _jwtConfig, out string accessToken );
         return Reply<string>.Success( accessToken );
@@ -41,13 +41,13 @@ internal sealed class SessionManager( UserManager<UserAccount> userManager, ISes
             LastActive = DateTime.Now
         };
         var addReply = await _sessions.AddSession( session );
-        LogReplyError( addReply );
+        LogIfErrorReply( addReply );
         return addReply;
     }
     internal async Task<IReply> RevokeSession( string sessionId, string userId )
     {
         var deleteReply = await _sessions.DeleteSession( sessionId, userId );
-        LogReplyError( deleteReply );
+        LogIfErrorReply( deleteReply );
         return deleteReply;
     }
 }

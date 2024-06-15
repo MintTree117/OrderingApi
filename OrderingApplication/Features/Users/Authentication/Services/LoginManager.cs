@@ -65,7 +65,7 @@ internal sealed class LoginManager( UserManager<UserAccount> userManager, IEmail
             (await Set2FaToken( user.Data )).OutSuccess( out IReply problem ) &&
             (await Send2FaEmail( user.Data )).OutSuccess( out problem );
         
-        LogReplyError( problem );
+        LogIfErrorReply( problem );
         
         return generated2Fa
             ? Reply<LoginInfo>.Success( LoginInfo.Pending2Fa() )
