@@ -1,10 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
-using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
 
-namespace OrderingApplication.Features.Users.Utilities;
+namespace OrderingApplication.Utilities;
 
 internal static class JwtUtils
 {
@@ -14,8 +13,9 @@ internal static class JwtUtils
         SigningCredentials credentials = new( jwtConfig.Key, SecurityAlgorithms.HmacSha256 );
         Claim[] claims = [
             new Claim( ClaimTypes.Sid, Guid.NewGuid().ToString() ), // session id
-            new Claim( ClaimTypes.NameIdentifier, user.Id),
-            new Claim( ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id )];
+            new Claim( ClaimTypes.NameIdentifier, user.Id ),
+            new Claim( ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id )
+        ];
 
         JwtSecurityToken jwt = new(
             null, // single issuer, no need to validate

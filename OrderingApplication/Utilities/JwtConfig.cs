@@ -1,6 +1,6 @@
 using Microsoft.IdentityModel.Tokens;
 
-namespace OrderingApplication.Features.Users.Utilities;
+namespace OrderingApplication.Utilities;
 
 internal sealed class JwtConfig
 {

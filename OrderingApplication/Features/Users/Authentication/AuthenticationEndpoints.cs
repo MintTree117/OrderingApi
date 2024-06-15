@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Authentication.Services;
@@ -29,7 +30,7 @@ internal static class AuthenticationEndpoints
 
         app.MapPost( "api/authentication/refresh",
             static async ( HttpContext http, SessionManager sessions ) =>
-                await RefreshSession( http, sessions ) ).RequireAuthorization( Consts.DefaultPolicy );
+                await RefreshSession( http, sessions ) ).RequireAuthorization( Consts.CookiePolicy );
 
         app.MapPut( "api/authentication/forgot", 
             static async ( [FromBody] string email, PasswordResetter resetter ) =>
@@ -77,14 +78,24 @@ internal static class AuthenticationEndpoints
     }
     static async Task<IResult> RefreshSession( HttpContext http, SessionManager manager )
     {
+        var isCookieAuth = http.User.Identity?.AuthenticationType == CookieAuthenticationDefaults.AuthenticationScheme;
+        var isJwtAuth = http.User.Identity?.AuthenticationType == JwtBearerDefaults.AuthenticationScheme;
         // We can't access Http-Only cookies in browser, so we send the minimal-jwt along with the cookies for basic claims
-        var authScheme = http.User.Identity?.AuthenticationType;
-        if (authScheme != CookieAuthenticationDefaults.AuthenticationScheme)
-            return Results.Unauthorized(); // If user denies cookies, they only get shorter, fire & forget jwts
+        if (isJwtAuth)
+        {
+            EndpointLogger.LogInformation( "IS JWT AUTH." );
+            return Results.Unauthorized();
+        }
         
         var refreshReply = await manager.GetRefreshedSession( http.SessionId(), http.UserId() );
-        if (refreshReply)
+        if (refreshReply){
+            EndpointLogger.LogError( http.SessionId() );
+            EndpointLogger.LogError( http.UserId() );
+            EndpointLogger.LogError( refreshReply.Data );
             return Results.Ok( refreshReply.Data );
+        }
+
+        EndpointLogger.LogError( refreshReply.GetMessage() );
 
         await http.SignOutAsync();
         return Results.Problem( refreshReply.GetMessage() );
@@ -103,6 +114,7 @@ internal static class AuthenticationEndpoints
         
         if (string.IsNullOrWhiteSpace( userId ) || string.IsNullOrWhiteSpace( sessionId ))
             return Results.Problem( "An internal server error occured." );
+        
         
         await http.SignInAsync( loginReply.Data.ClaimsPrincipal!, new AuthenticationProperties { IsPersistent = true } );
         await sessions.AddSession( sessionId, userId );

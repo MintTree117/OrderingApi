@@ -71,14 +71,7 @@ internal static class BuilderExtentions
         builder.Services
             .AddAuthorization( GetAuthorizationOptions );
     }
-
-    static void GetAuthenticationOptions( AuthenticationOptions options )
-    {
-        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.RequireAuthenticatedSignIn = false;
-    }
+    
     static void GetUserOptions( IdentityOptions options, IConfiguration configuration )
     {
         const string Base = "Users:Account:";
@@ -100,6 +93,13 @@ internal static class BuilderExtentions
         options.Password.RequireUppercase = configuration.GetSection( PasswordBase + nameof( options.Password.RequireUppercase ) ).Get<bool>();
         options.Password.RequireDigit = configuration.GetSection( PasswordBase + nameof( options.Password.RequireDigit ) ).Get<bool>();
         options.Password.RequireNonAlphanumeric = configuration.GetSection( PasswordBase + nameof( options.Password.RequireNonAlphanumeric ) ).Get<bool>();
+    }
+    static void GetAuthenticationOptions( AuthenticationOptions options )
+    {
+        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.RequireAuthenticatedSignIn = false;
     }
     static void GetAuthorizationOptions( AuthorizationOptions options )
     {

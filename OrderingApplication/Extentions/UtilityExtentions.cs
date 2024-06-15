@@ -24,6 +24,8 @@ internal static class UtilityExtentions
     internal static Exception Exception( this IConfiguration configuration, string section ) =>
         new( $"Failed to get section {section} from IConfiguration." );
 
+    internal static string AuthType( this HttpContext context ) =>
+        context.User.FindFirstValue( ClaimTypes.AuthenticationMethod ) ?? string.Empty;
     internal static string SessionId( this HttpContext context ) =>
         context.User.FindFirstValue( ClaimTypes.Sid ) ?? string.Empty;
     internal static string UserId( this HttpContext context ) =>
@@ -32,7 +34,7 @@ internal static class UtilityExtentions
         context.User.FindFirstValue( ClaimTypes.Email ) ?? string.Empty;
     internal static string Username( this HttpContext context ) =>
         context.User.FindFirstValue( ClaimTypes.Name ) ?? string.Empty;
-
+    
     internal static string UserId( this ClaimsPrincipal claims ) =>
         claims.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.NameIdentifier )?.Value ?? string.Empty;
     internal static string Email( this ClaimsPrincipal claims ) =>
