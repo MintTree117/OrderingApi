@@ -1,12 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Authentication.Services;
 using OrderingApplication.Features.Users.Authentication.Types;
-using OrderingApplication.Features.Users.Utilities;
 using OrderingApplication.Utilities;
 using OrderingDomain.ReplyTypes;
 
@@ -78,27 +76,18 @@ internal static class AuthenticationEndpoints
     }
     static async Task<IResult> RefreshSession( HttpContext http, SessionManager manager )
     {
-        var isCookieAuth = http.User.Identity?.AuthenticationType == CookieAuthenticationDefaults.AuthenticationScheme;
-        var isJwtAuth = http.User.Identity?.AuthenticationType == JwtBearerDefaults.AuthenticationScheme;
-        // We can't access Http-Only cookies in browser, so we send the minimal-jwt along with the cookies for basic claims
-        if (isJwtAuth)
+        // TODO: Just for debugging purposes
+        if (http.AuthType() != Consts.CookiePolicy)
         {
-            EndpointLogger.LogInformation( "IS JWT AUTH." );
+            EndpointLogger.LogInformation( "Refresh endpoint is accessed but not cookies." );
             return Results.Unauthorized();
         }
-        
-        var refreshReply = await manager.GetRefreshedSession( http.SessionId(), http.UserId() );
-        if (refreshReply){
-            EndpointLogger.LogError( http.SessionId() );
-            EndpointLogger.LogError( http.UserId() );
-            EndpointLogger.LogError( refreshReply.Data );
-            return Results.Ok( refreshReply.Data );
-        }
 
-        EndpointLogger.LogError( refreshReply.GetMessage() );
-
-        await http.SignOutAsync();
-        return Results.Problem( refreshReply.GetMessage() );
+        var refreshReply = await manager.UpdateSession( http.SessionId(), http.UserId() );
+        if (!refreshReply.Succeeded)
+            await http.SignOutAsync();
+        EndpointLogger.LogInformation( refreshReply.GetMessage() );
+        return refreshReply.GetIResult();
     }
     static async Task<IResult> SessionRevoke( HttpContext http, SessionManager manager )
     {
@@ -108,16 +97,17 @@ internal static class AuthenticationEndpoints
     }
     static async Task<IResult> HandleLoginReply( Reply<LoginInfo> loginReply, HttpContext http, SessionManager sessions )
     {
-        // HTTP CONTEXT ISN'T UPDATED RIGHT AWAY
-        string? userId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.NameIdentifier )?.Value;
-        string? sessionId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.Sid )?.Value;
+        string httpSessionId = Guid.NewGuid().ToString();
         
-        if (string.IsNullOrWhiteSpace( userId ) || string.IsNullOrWhiteSpace( sessionId ))
-            return Results.Problem( "An internal server error occured." );
+        List<Claim> httpOnlyClaims = [];
+        httpOnlyClaims.AddRange( loginReply.Data.ClaimsPrincipal?.Claims ?? [] );
+        httpOnlyClaims.Add( new Claim( ClaimTypes.Sid, httpSessionId ) );
+        httpOnlyClaims.Add( new Claim( ClaimTypes.AuthenticationMethod, Consts.CookiePolicy ) );
+        ClaimsPrincipal httpOnlyClaimsPrincipal = new( new ClaimsIdentity( httpOnlyClaims ) );
         
-        
-        await http.SignInAsync( loginReply.Data.ClaimsPrincipal!, new AuthenticationProperties { IsPersistent = true } );
-        await sessions.AddSession( sessionId, userId );
+        // HTTP CONTEXT IS NOT UPDATED RIGHT AWAY HERE, MAKE SURE TO USE CLAIMS FROM LOGIN REPLY !!! NOT !!! FROM HTTP CONTEXT
+        await http.SignInAsync( httpOnlyClaimsPrincipal, new AuthenticationProperties { IsPersistent = true } );
+        await sessions.AddSession( httpSessionId, loginReply.Data.ClaimsPrincipal!.UserId() );
 
         var loginResponse = LoginResponse.LoggedIn( loginReply.Data.AccessToken! );
         return Results.Ok( loginResponse );

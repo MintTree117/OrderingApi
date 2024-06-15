@@ -8,11 +8,10 @@ namespace OrderingApplication.Utilities;
 internal static class JwtUtils
 {
     internal static void GenerateAccessToken( UserAccount user, JwtConfig jwtConfig, out string token )
-    {
+    { 
         DateTime expiration = DateTime.UtcNow + jwtConfig.AccessLifetime;
         SigningCredentials credentials = new( jwtConfig.Key, SecurityAlgorithms.HmacSha256 );
         Claim[] claims = [
-            new Claim( ClaimTypes.Sid, Guid.NewGuid().ToString() ), // session id
             new Claim( ClaimTypes.NameIdentifier, user.Id ),
             new Claim( ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id )
         ];
@@ -31,7 +30,6 @@ internal static class JwtUtils
         DateTime expiration = DateTime.UtcNow + jwtConfig.AccessLifetime;
         SigningCredentials credentials = new( jwtConfig.Key, SecurityAlgorithms.HmacSha256 );
         Claim[] claims = [
-            new Claim( ClaimTypes.Sid, Guid.NewGuid().ToString() ), // session id
             new Claim( ClaimTypes.NameIdentifier, user.Id ),
             new Claim( ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id )
         ];

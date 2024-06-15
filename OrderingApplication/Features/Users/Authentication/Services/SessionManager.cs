@@ -14,7 +14,7 @@ internal sealed class SessionManager( UserManager<UserAccount> userManager, ISes
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly ISessionRepository _sessions = sessions;
     
-    internal async Task<Reply<string>> GetRefreshedSession( string sessionId, string userId )
+    internal async Task<Reply<string>> UpdateSession( string sessionId, string userId )
     {
         var session = await _sessions.GetSession( sessionId, userId );
         LogReplyError( session );

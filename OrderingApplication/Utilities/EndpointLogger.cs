@@ -6,6 +6,8 @@ namespace OrderingApplication.Utilities;
 
 internal sealed class EndpointLogger // Static Singleton
 {
+    const string Padding = "------------------";
+    
     internal static ILogger<EndpointLogger> Logger { get; set; } = null!;
 
     internal static void LogReplyError( IReply reply ) =>
@@ -13,18 +15,18 @@ internal sealed class EndpointLogger // Static Singleton
     internal static void LogIdentityResultError( IdentityResult identityResult ) =>
         Logger.LogIdentityResultError( identityResult );
     internal static void LogInformation( string message ) =>
-        Logger.LogInformation( message );
+        Logger.LogInformation( $"{Padding} {message}" );
     internal static void LogError( string message ) =>
-        Logger.LogError( message );
+        Logger.LogError( $"{Padding} {message}" );
     internal static void LogException( Exception exception, string message ) =>
-        Logger.LogError( exception, message );
+        Logger.LogError( $"{Padding} {exception} {message}" );
 
     internal static void EndpointHit( string endpoint, Dictionary<string, object>? vars = null ) =>
-        Logger.LogInformation( $"Endpoint Hit: {endpoint} {GetVars( vars )}" );
+        Logger.LogInformation( $"{Padding} Endpoint Hit: {endpoint} {GetVars( vars )}" );
     internal static void EndpointSuccess( string endpoint, Dictionary<string, object>? vars = null ) =>
-        Logger.LogInformation( $"Endpoint Success: {endpoint} {GetVars( vars )}" );
+        Logger.LogInformation( $"{Padding} Endpoint Success: {endpoint} {GetVars( vars )}" );
     internal static void EndpointFail( string endpoint, Dictionary<string, object>? vars = null ) =>
-        Logger.LogInformation( $"Endpoint Fail: {endpoint} {GetVars( vars )}" );
+        Logger.LogInformation( $"{Padding} Endpoint Fail: {endpoint} {GetVars( vars )}" );
 
     internal static void EndpointResult( string endpoint, IReply reply, Dictionary<string, object>? vars = null )
     {
