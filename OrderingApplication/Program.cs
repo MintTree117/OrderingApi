@@ -1,11 +1,12 @@
 using OrderingApplication.Extentions;
-using OrderingApplication.Utilities;
+using OrderingApplication.Middleware;
 using OrderingInfrastructure;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder( args );
 
 builder.ConfigureLogging();
 builder.ConfigureInfrastructure();
+builder.ConfigureAuthentication();
 builder.ConfigureFeatures();
 builder.ConfigureSwagger();
 builder.ConfigureCors();

@@ -1,12 +1,13 @@
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using OrderingApplication.Extentions;
-using OrderingApplication.Features.Users.Utilities;
 
-namespace OrderingApplication.Features.Users;
+namespace OrderingApplication.Features.Users.Utilities;
 
-internal sealed class UserConfigCache( IConfiguration configuration )
+internal sealed class UserConsts( IConfiguration configuration )
 {
+    internal static UserConsts Instance { get; set; } = default!;
+    
     const string PagesBase = "Users:Pages:";
     internal readonly string ConfirmEmailPage = configuration.GetOrThrow( PagesBase + nameof( ConfirmEmailPage ) );
     internal readonly string ResetPasswordPage = configuration.GetOrThrow( PagesBase + nameof( ResetPasswordPage ) );

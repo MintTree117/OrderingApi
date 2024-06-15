@@ -9,13 +9,13 @@ using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 
-internal sealed class LoginManager( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<LoginManager> logger )
+internal sealed class LoginManager( UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<LoginManager> logger )
     : BaseService<LoginManager>( logger )
 {
     const string EmailTokenProvider = "Email";
     const string EmailTokenName = "ConfirmEmailToken";
     
-    readonly JwtConfig _jwtConfig = configCache.JwtConfigRules;
+    readonly JwtConfig _jwtConfig = UserConsts.Instance.JwtConfigRules;
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly IEmailSender _emailSender = emailSender;
     readonly bool _requiresConfirmedEmail = userManager.Options.SignIn.RequireConfirmedEmail;
@@ -57,6 +57,9 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
     }
     async Task<Reply<LoginInfo>> GenerateAndSend2FaCode( Reply<UserAccount> user )
     {
+        if (string.IsNullOrWhiteSpace( user.Data.TwoFactorEmail ))
+            return Reply<LoginInfo>.Conflict( "Your two factor email isn't set. The login cannot proceed." );
+
         bool generated2Fa =
             (await Set2FaToken( user.Data )).OutSuccess( out IReply problem ) &&
             (await Send2FaEmail( user.Data )).OutSuccess( out problem );
@@ -86,7 +89,7 @@ internal sealed class LoginManager( UserConfigCache configCache, UserManager<Use
              <p>Please enter this code to verify your login. If you did not request this, please ignore this email.</p>
              """;
         string email = UserUtils.GenerateFormattedEmail( user, subject, body );
-        return _emailSender.SendHtmlEmail( user.Email ?? string.Empty, subject, email );
+        return _emailSender.SendHtmlEmail( user.TwoFactorEmail ?? string.Empty, subject, email );
     }
     
     // LOGIN 2FA

@@ -6,18 +6,17 @@ using OrderingInfrastructure.Features.Users.Repositories;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 
-internal sealed class SessionManager( UserConfigCache configCache, UserManager<UserAccount> userManager, ISessionRepository sessions, ILogger<SessionManager> logger )
+internal sealed class SessionManager( UserManager<UserAccount> userManager, ISessionRepository sessions, ILogger<SessionManager> logger )
     : BaseService<SessionManager>( logger )
 {
-    readonly JwtConfig _jwtConfig = configCache.JwtConfigRules;
+    readonly JwtConfig _jwtConfig = UserConsts.Instance.JwtConfigRules;
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly ISessionRepository _sessions = sessions;
     
-    internal async Task<Reply<string>> GetRefreshedToken( string sessionId, string userId )
+    internal async Task<Reply<string>> GetRefreshedSession( string sessionId, string userId )
     {
         var session = await _sessions.GetSession( sessionId, userId );
         LogReplyError( session );
-        LogError( $"----------------------------------------------------------------------------------------------- {sessionId}" );
         if (!session)
             return Reply<string>.NotFound( "Session doesn't exist." );
 
@@ -40,7 +39,6 @@ internal sealed class SessionManager( UserConfigCache configCache, UserManager<U
             DateCreated = DateTime.Now,
             LastActive = DateTime.Now
         };
-        LogError( $"----------------------------------------------------------------------------------------------- {sessionId}" );
         var addReply = await _sessions.AddSession( session );
         LogReplyError( addReply );
         return addReply;

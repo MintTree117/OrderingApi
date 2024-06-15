@@ -27,9 +27,11 @@ internal static class Utils
         string customBody =
             $"""
              <p>Thank you for registering with us. Please click the link below to confirm your email address:</p>
+             <hr/>
              <p>
-                 <a href='{link}' style='display: inline-block; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007BFF; text-decoration: none; border-radius: 5px;'>Confirm Email</a>
+                <a href={link}>{link}</a>
              </p>
+             <hr/>
              <p>If you did not create an account, please ignore this email.</p>
              """;
         string body = UserUtils.GenerateFormattedEmail( user, subject, customBody );

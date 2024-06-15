@@ -7,10 +7,9 @@ using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.Users.Registration.Systems;
 
-internal sealed class AccountConfirmationSystem( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<AccountConfirmationSystem> logger )
+internal sealed class AccountConfirmationSystem( UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<AccountConfirmationSystem> logger )
     : BaseService<AccountConfirmationSystem>( logger )
 {
-    readonly UserConfigCache _configCache = configCache;
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly IEmailSender _emailSender = emailSender;
 
@@ -20,7 +19,7 @@ internal sealed class AccountConfirmationSystem( UserConfigCache configCache, Us
         if (!userReply)
             return IReply.NotFound();
         
-        var emailReply = await Utils.SendEmailConfirmationEmail( userReply.Data, _userManager, _emailSender, _configCache.ConfirmEmailPage );
+        var emailReply = await Utils.SendEmailConfirmationEmail( userReply.Data, _userManager, _emailSender, UserConsts.Instance.ConfirmEmailPage );
         LogReplyError( emailReply );
         return emailReply;
     }

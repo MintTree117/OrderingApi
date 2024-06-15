@@ -1,6 +1,7 @@
 using System.Text;
+using OrderingApplication.Utilities;
 
-namespace OrderingApplication.Utilities;
+namespace OrderingApplication.Middleware;
 
 internal sealed class RequestResponseLoggingMiddleware( RequestDelegate next )
 {

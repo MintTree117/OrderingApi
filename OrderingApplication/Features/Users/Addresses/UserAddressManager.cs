@@ -35,16 +35,8 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
             return IReply.NotFound( getReply );
 
         var alreadyPrimary = getReply.Enumerable.Any( static a => a.IsPrimary );
-
-        switch ( model.IsPrimary )
-        {
-            case false when !alreadyPrimary:
-                return IReply.Conflict( "There must be a primary address." );
-            case true when alreadyPrimary:
-                return IReply.Conflict( "There can only be one primary address." );
-            case false:
-                return await _repository.UpdateAddress( model );
-        }
+        if (!request.IsPrimary && !alreadyPrimary)
+            return IReply.Conflict( "There must be a primary address." );
 
         foreach ( UserAddress otherAddress in getReply.Enumerable ) { // Set all other addresses to not be primary
             otherAddress.IsPrimary = false;

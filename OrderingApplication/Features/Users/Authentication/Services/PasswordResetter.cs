@@ -7,10 +7,9 @@ using OrderingInfrastructure.Email;
 
 namespace OrderingApplication.Features.Users.Authentication.Services;
 
-internal sealed class PasswordResetter( UserConfigCache configCache, UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<PasswordResetter> logger )
+internal sealed class PasswordResetter( UserManager<UserAccount> userManager, IEmailSender emailSender, ILogger<PasswordResetter> logger )
     : BaseService<PasswordResetter>( logger )
 {
-    readonly UserConfigCache _configCache = configCache;
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly IEmailSender _emailSender = emailSender;
     
@@ -44,7 +43,7 @@ internal sealed class PasswordResetter( UserConfigCache configCache, UserManager
     {
         const string subject = "Reset Password";
         string code = UserUtils.WebEncode( await _userManager.GeneratePasswordResetTokenAsync( user ) );
-        string returnUrl = $"{_configCache.ResetPasswordPage}?Email={user.Email}&Code={code}";
+        string returnUrl = $"{UserConsts.Instance.ResetPasswordPage}?Email={user.Email}&Code={code}";
         string body = GenerateResetEmail( user, code, returnUrl, subject );
         return _emailSender
             .SendHtmlEmail( user.Email ?? string.Empty, subject, body )
@@ -57,10 +56,12 @@ internal sealed class PasswordResetter( UserConfigCache configCache, UserManager
         string link = $"{returnUrl}?email={user.Email}&code={code}";
         string customBody =
             $"""
-             <p>TPlease click the link below to reset your password:</p>
+             <p>Please click the link below to reset your password:</p>
+             <hr/>
              <p>
-                 <a href='{link}' style='display: inline-block; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007BFF; text-decoration: none; border-radius: 5px;'>Confirm Email</a>
+                <a href={link}>{link}</a>
              </p>
+             <hr/>
              <p>If you did not request this, please ignore this email.</p>
              """;
         string body = UserUtils.GenerateFormattedEmail( user, subject, customBody );

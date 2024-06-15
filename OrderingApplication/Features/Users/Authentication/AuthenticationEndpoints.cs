@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Authentication.Services;
 using OrderingApplication.Features.Users.Authentication.Types;
+using OrderingApplication.Features.Users.Utilities;
 using OrderingApplication.Utilities;
 using OrderingDomain.ReplyTypes;
 
@@ -12,8 +13,6 @@ namespace OrderingApplication.Features.Users.Authentication;
 
 internal static class AuthenticationEndpoints
 {
-    const string Cookies = "Cookies";
-    
     internal static void MapAuthenticationEndpoints( this IEndpointRouteBuilder app )
     {
         app.MapPost( "api/authentication/login",
@@ -30,7 +29,7 @@ internal static class AuthenticationEndpoints
 
         app.MapPost( "api/authentication/refresh",
             static async ( HttpContext http, SessionManager sessions ) =>
-                await SessionRefresh( http, sessions ) ).RequireAuthorization( Cookies );
+                await RefreshSession( http, sessions ) ).RequireAuthorization( Consts.DefaultPolicy );
 
         app.MapPut( "api/authentication/forgot", 
             static async ( [FromBody] string email, PasswordResetter resetter ) =>
@@ -42,7 +41,7 @@ internal static class AuthenticationEndpoints
 
         app.MapPut( "api/authentication/logout",
             static async ( HttpContext http, SessionManager sessions ) =>
-                await SessionRevoke( http, sessions ) ).RequireAuthorization( Cookies );
+                await SessionRevoke( http, sessions ) ).RequireAuthorization( Consts.CookiePolicy ); // tokens arent persisted
     }
     
     static async Task<IResult> Login( LoginRequest request, HttpContext http, LoginManager manager, SessionManager sessions )
@@ -66,7 +65,6 @@ internal static class AuthenticationEndpoints
         var loginReply = await manager.LoginRecovery( request );
         return loginReply.GetIResult(); //DO NOT SIGN IN COOKIES BECAUSE THIS IS SHORT-LIVED RECOVERY ACCESS
     }
-    
     static async Task<IResult> SendResetEmail( string email, PasswordResetter manager )
     {
         var emailReply = await manager.ForgotPassword( email );
@@ -77,19 +75,14 @@ internal static class AuthenticationEndpoints
         var emailReply = await manager.ResetPassword( request );
         return emailReply.GetIResult();
     }
-
-    static async Task<IResult> SessionRefresh( HttpContext http, SessionManager manager )
+    static async Task<IResult> RefreshSession( HttpContext http, SessionManager manager )
     {
-        EndpointLogger.LogInformation( "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" );
-        EndpointLogger.LogInformation( "USERID" + http.UserId() );
-        ClaimsPrincipal user = http.User;
-        foreach ( var c in user.Claims )
-        {
-            EndpointLogger.LogInformation( $"CLAIM: {c.Type} : {c.Value}" );
-        }
-
-        var refreshReply = await manager.GetRefreshedToken( http.SessionId(), http.UserId() );
-
+        // We can't access Http-Only cookies in browser, so we send the minimal-jwt along with the cookies for basic claims
+        var authScheme = http.User.Identity?.AuthenticationType;
+        if (authScheme != CookieAuthenticationDefaults.AuthenticationScheme)
+            return Results.Unauthorized(); // If user denies cookies, they only get shorter, fire & forget jwts
+        
+        var refreshReply = await manager.GetRefreshedSession( http.SessionId(), http.UserId() );
         if (refreshReply)
             return Results.Ok( refreshReply.Data );
 
@@ -102,12 +95,12 @@ internal static class AuthenticationEndpoints
         await http.SignOutAsync( CookieAuthenticationDefaults.AuthenticationScheme );
         return sessionReply.GetIResult();
     }
-
     static async Task<IResult> HandleLoginReply( Reply<LoginInfo> loginReply, HttpContext http, SessionManager sessions )
     {
         // HTTP CONTEXT ISN'T UPDATED RIGHT AWAY
         string? userId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.NameIdentifier )?.Value;
         string? sessionId = loginReply.Data.ClaimsPrincipal?.Claims.FirstOrDefault( static c => c.Type == ClaimTypes.Sid )?.Value;
+        
         if (string.IsNullOrWhiteSpace( userId ) || string.IsNullOrWhiteSpace( sessionId ))
             return Results.Problem( "An internal server error occured." );
         

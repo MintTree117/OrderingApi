@@ -1,6 +1,7 @@
 using System.Net;
+using OrderingApplication.Utilities;
 
-namespace OrderingApplication.Utilities;
+namespace OrderingApplication.Middleware;
 
 internal sealed class GlobalExceptionHandlerMiddleware( RequestDelegate next )
 {
