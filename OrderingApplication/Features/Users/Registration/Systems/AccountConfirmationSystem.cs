@@ -13,7 +13,7 @@ internal sealed class AccountConfirmationSystem( UserManager<UserAccount> userMa
     readonly UserManager<UserAccount> _userManager = userManager;
     readonly IEmailSender _emailSender = emailSender;
 
-    internal async Task<IReply> SendEmailConfirmationLink( string email )
+    internal async Task<IReply> EmailConfirmLink( string email )
     {
         var userReply = await ValidateRequest( email );
         if (!userReply)
@@ -37,7 +37,7 @@ internal sealed class AccountConfirmationSystem( UserManager<UserAccount> userMa
 
     async Task<Reply<UserAccount>> ValidateRequest( string email )
     {
-        var userReply = await _userManager.FindByEmail( email );
+        var userReply = await _userManager.FindByEmailOrRecoveryEmail( email );
         if (!userReply)
             return Reply<UserAccount>.UserNotFound();
         

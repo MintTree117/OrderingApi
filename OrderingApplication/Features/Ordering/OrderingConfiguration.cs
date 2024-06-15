@@ -8,7 +8,6 @@ internal static class OrderingConfiguration
 {
     internal static void ConfigureOrdering( this WebApplicationBuilder builder )
     {
-        builder.ConfigureInfrastructure();
         builder.Services.AddSingleton<OrderLocationCache>();
         builder.Services.AddScoped<OrderLocationService>();
         builder.Services.AddScoped<OrderPlacingSystem>();

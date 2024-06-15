@@ -24,7 +24,7 @@ internal static class AccountRegistrationEndpoints
 
     static async Task<IResult> SendEmailConfirmationLink( string email, AccountConfirmationSystem system )
     {
-        var reply = await system.SendEmailConfirmationLink( email );
+        var reply = await system.EmailConfirmLink( email );
         return reply.GetIResult();
     }
     static async Task<IResult> ConfirmEmail( ConfirmAccountEmailRequest request, AccountConfirmationSystem system )
