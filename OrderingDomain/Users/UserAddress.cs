@@ -1,9 +1,8 @@
-using OrderingDomain._Common;
 using OrderingDomain.ValueTypes;
 
 namespace OrderingDomain.Users;
 
-public sealed class UserAddress : IEntity
+public sealed class UserAddress
 {
     public UserAddress() { }
     public UserAddress( Guid id, string userId, bool isPrimary, Address address )

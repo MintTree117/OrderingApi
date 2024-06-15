@@ -1,8 +1,6 @@
-using OrderingDomain._Common;
-
 namespace OrderingDomain.Orders;
 
-public sealed class OrderStateExpireTime : IEntity
+public sealed class OrderStateExpireTime
 {
     public Guid Id { get; set; }
     public OrderState State { get; set; }

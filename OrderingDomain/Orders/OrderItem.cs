@@ -1,8 +1,6 @@
-using OrderingDomain._Common;
-
 namespace OrderingDomain.Orders;
 
-public sealed class OrderItem : IEntity
+public sealed class OrderItem
 {
     public OrderItem() { }
 

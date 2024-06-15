@@ -1,10 +1,9 @@
-using OrderingDomain._Common;
 using OrderingDomain.Orders;
 using OrderingDomain.ValueTypes;
 
 namespace OrderingDomain.Billing;
 
-public sealed class Invoice : IEntity
+public sealed class Invoice
 {
     public Guid Id { get; set; } = Guid.Empty;
     public Guid OrderId { get; set; } = Guid.Empty;

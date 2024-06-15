@@ -1,8 +1,6 @@
-using OrderingDomain._Common;
-
 namespace OrderingDomain.Orders;
 
-public sealed class OrderLine : IEntity
+public sealed class OrderLine
 {
     public OrderLine() { }
     public OrderLine( Guid orderId, Guid warehouseId )

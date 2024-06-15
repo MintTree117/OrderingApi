@@ -1,9 +1,8 @@
-using OrderingDomain._Common;
 using OrderingDomain.ValueTypes;
 
 namespace OrderingDomain.Orders;
 
-public sealed class Order : IEntity
+public sealed class Order
 {
     public Guid Id { get; set; } = Guid.Empty;
     public Guid CustomerId { get; set; } = Guid.Empty;

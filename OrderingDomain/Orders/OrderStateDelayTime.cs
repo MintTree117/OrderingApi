@@ -1,8 +1,6 @@
-using OrderingDomain._Common;
-
 namespace OrderingDomain.Orders;
 
-public class OrderStateDelayTime : IEntity
+public class OrderStateDelayTime
 {
     public Guid Id { get; set; }
     public OrderState State { get; set; }
