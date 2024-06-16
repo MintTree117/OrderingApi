@@ -17,9 +17,19 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
         LogIfErrorReply( getReply );
         if (!getReply)
             return IReply.Fail( getReply );
+
+        var model = address.ToModel( userId );
+        
+        // ensure only one primary address
+        if (model.IsPrimary)
+            foreach ( UserAddress otherAddress in getReply.Enumerable )
+                otherAddress.IsPrimary = false;
+        var saveReply = await _repository.SaveAsync();
+        LogIfErrorReply( saveReply );
+        if (!saveReply)
+            return IReply.ServerError();
         
         // ensure always a primary address
-        var model = address.ToModel( userId );
         if (!getReply.Enumerable.Any())
             model.IsPrimary = true;
         
@@ -47,7 +57,7 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
             return IReply.Conflict( "There must be a primary address." );
 
         // ensure only one primary address
-        if (address.IsPrimary && alreadyPrimary is not null )
+        if (address.IsPrimary)
             foreach ( UserAddress otherAddress in getReply.Enumerable )
                 otherAddress.IsPrimary = false;
         
