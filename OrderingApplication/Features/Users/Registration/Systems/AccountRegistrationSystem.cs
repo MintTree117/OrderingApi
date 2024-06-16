@@ -29,13 +29,23 @@ internal sealed class AccountRegistrationSystem( UserManager<UserAccount> userMa
         if (request.Username.Length is < 6 or > 24)
             return Reply<UserAccount>.BadRequest( "Username must be between 6 and 24 characters." );
         
-        var user = new UserAccount( request.Email, request.Username, request.Phone );
-        var created = await _userManager.CreateAsync( user, request.Password );
+        var user = new UserAccount( request.Email, request.Username, request.Phone ) {
+            TwoFactorEmail = request.TwoFactorEmail
+        };
+        var createdResult = await _userManager.CreateAsync( user, request.Password );
         
-        LogIfErrorResult( created );
-        
-        return created.Succeeded
+        LogIfErrorResult( createdResult );
+
+        if (string.IsNullOrWhiteSpace( request.TwoFactorEmail ))
+            return createdResult.Succeeded
+                ? Reply<UserAccount>.Success( user )
+                : Reply<UserAccount>.BadRequest( createdResult.CombineErrors() ); // TODO: to get validation errors for user, but may risk exposing some exceptions...
+
+        var twoFactorReply = await _userManager.SetTwoFactorEnabledAsync( user, true );
+        LogIfErrorResult( twoFactorReply );
+        return twoFactorReply.Succeeded
             ? Reply<UserAccount>.Success( user )
-            : Reply<UserAccount>.BadRequest( created.CombineErrors() ); // TODO: to get validation errors for user, but may risk exposing some exceptions...
+            : Reply<UserAccount>.BadRequest( twoFactorReply.CombineErrors() ); // TODO: to get validation errors for user, but may risk exposing some exceptions...
+        
     }
 }

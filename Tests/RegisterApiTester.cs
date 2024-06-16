@@ -36,8 +36,8 @@ public class RegisterApiTester( HttpClient httpClient, string apiUrl )
         string username = $"user{_random.Next( 1000, 9999 )}";
         string phone = GenerateRandomPhoneNumber();
         string password = Guid.NewGuid().ToString().Substring( 0, 8 ); // Generate a random 8-character password
-
-        return new RegisterAccountRequest( email, username, phone, password, string.Empty );
+        throw new Exception( $"Tests: {GenerateRandomRegisterRequest()}" );
+        //return new RegisterAccountRequest( email, username, phone, password, string.Empty );
     }
 
     string GenerateRandomPhoneNumber() =>

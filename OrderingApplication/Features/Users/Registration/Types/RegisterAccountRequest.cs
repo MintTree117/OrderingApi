@@ -5,4 +5,5 @@ internal readonly record struct RegisterAccountRequest(
     string Username,
     string? Phone,
     string Password,
-    string PasswordConfirm );
+    string PasswordConfirm,
+    string? TwoFactorEmail );

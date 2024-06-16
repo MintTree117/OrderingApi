@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Registration.Types;
 using OrderingApplication.Features.Users.Utilities;
 using OrderingDomain.ReplyTypes;
@@ -27,7 +28,7 @@ internal sealed class AccountConfirmationSystem( UserManager<UserAccount> userMa
     {
         var userReply = await ValidateRequest( request.Email );
         if (!userReply)
-            return IReply.NotFound();
+            return IReply.NotFound( userReply );
 
         var confirmed = await ConfirmEmail( userReply.Data, request.Code );
         return confirmed.CheckSuccess()
@@ -37,11 +38,15 @@ internal sealed class AccountConfirmationSystem( UserManager<UserAccount> userMa
 
     async Task<Reply<UserAccount>> ValidateRequest( string email )
     {
-        var userReply = await _userManager.FindByEmailOrRecoveryEmail( email );
+        var userReply = await _userManager.FindByEmail( email );
         if (!userReply)
             return Reply<UserAccount>.UserNotFound();
+
+        var confirmed = await _userManager.IsEmailConfirmedAsync( userReply.Data );
+        if (confirmed)
+            Logger.LogError( "ConfirmEmail ------------ EMAIL ALREADY CONFIRMED" );   
         
-        return await _userManager.IsEmailConfirmedAsync( userReply.Data )
+        return confirmed
             ? Reply<UserAccount>.Conflict( "Email is already confirmed." )
             : Reply<UserAccount>.Success( userReply.Data );
     }

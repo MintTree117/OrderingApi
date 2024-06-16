@@ -39,10 +39,11 @@ internal sealed class AddressRepository( UserDbContext database, ILogger<Address
     {
         try {
             int totalCount = await _database.Addresses.CountAsync( a => a.UserId == userId );
+            int skip = pageSize < totalCount ? pageSize * GetPage( page ) : 0;
             List<UserAddress> addresses =
                 await _database.Addresses
                         .Where( a => a.UserId == userId )
-                        .Skip( pageSize * GetPage( page ) )
+                        .Skip( skip )
                         .Take( pageSize )
                         .ToListAsync();
             return Reply<PagedResult<UserAddress>>

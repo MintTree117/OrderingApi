@@ -17,13 +17,17 @@ internal static class AccountSecurityEndpoints
             static async ( [FromBody] UpdatePasswordRequest request, HttpContext http, AccountSecurityManager manager ) =>
             await UpdatePassword( request, http, manager ) ).RequireAuthorization( Consts.DefaultPolicy );
 
-        app.MapPut( "api/account/security/disable2fa",
-            static async ( [FromBody] Update2FaRequest request, HttpContext http, AccountSecurityManager manager ) =>
-            await UpdateTwoFactor( request, http, manager ) ).RequireAuthorization( Consts.DefaultPolicy );
+        app.MapPost( "api/account/security/generateRecovery",
+            static async ( HttpContext http, AccountSecurityManager manager ) =>
+            await GenerateRecoveryCodes( http, manager ) ).RequireAuthorization( Consts.DefaultPolicy );
 
-        app.MapPut( "api/account/security/update2fa",
+        app.MapPut( "api/account/security/disable2fa",
             static async ( HttpContext http, AccountSecurityManager manager ) =>
             await DisableTwoFactor( http, manager ) ).RequireAuthorization( Consts.DefaultPolicy );
+
+        app.MapPut( "api/account/security/update2fa",
+            static async ( [FromBody] Update2FaRequest request, HttpContext http, AccountSecurityManager manager ) =>
+            await UpdateTwoFactor( request, http, manager ) ).RequireAuthorization( Consts.DefaultPolicy );
     }
 
     static async Task<IResult> GetSecuritySettings( HttpContext http, AccountSecurityManager manager )
@@ -34,6 +38,11 @@ internal static class AccountSecurityEndpoints
     static async Task<IResult> UpdatePassword( UpdatePasswordRequest request, HttpContext http, AccountSecurityManager manager )
     {
         var reply = await manager.UpdatePassword( http.UserId(), request );
+        return reply.GetIResult();
+    }
+    static async Task<IResult> GenerateRecoveryCodes( HttpContext http, AccountSecurityManager manager )
+    {
+        var reply = await manager.GenerateRecoveryCodes( http.UserId() );
         return reply.GetIResult();
     }
     static async Task<IResult> DisableTwoFactor( HttpContext http, AccountSecurityManager manager )

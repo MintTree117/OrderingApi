@@ -145,11 +145,13 @@ internal sealed class LoginManager( UserManager<UserAccount> userManager, IEmail
     }
     async Task<Reply<bool>> ValidateRecoveryLogin( UserAccount user, LoginRecoveryRequest request )
     {
+        IdentityResult identityResult = new();
         bool validated =
             (await _userManager.IsAccountValid( user, _requiresConfirmedEmail )).OutSuccess( out IReply validationResult ) &&
+            (await _userManager.RedeemTwoFactorRecoveryCodeAsync( user, request.RecoveryCode )).SucceedsOut( out identityResult ) &&
             (await ClearAccessFailCount( user )).OutSuccess( out validationResult );
-
-        return validated
+        LogIfErrorResult( identityResult );
+        return validated && identityResult.Succeeded
             ? IReply.Success()
             : IReply.Unauthorized( validationResult );
     }

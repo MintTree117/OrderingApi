@@ -22,12 +22,14 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
         
         // ensure only one primary address
         if (model.IsPrimary)
+        {
             foreach ( UserAddress otherAddress in getReply.Enumerable )
                 otherAddress.IsPrimary = false;
-        var saveReply = await _repository.SaveAsync();
-        LogIfErrorReply( saveReply );
-        if (!saveReply)
-            return IReply.ServerError();
+            var saveReply = await _repository.SaveAsync();
+            LogIfErrorReply( saveReply );
+            if (!saveReply)
+                return IReply.ServerError();
+        }
         
         // ensure always a primary address
         if (!getReply.Enumerable.Any())

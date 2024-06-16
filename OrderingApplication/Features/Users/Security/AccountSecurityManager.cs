@@ -27,6 +27,19 @@ internal sealed class AccountSecurityManager( UserManager<UserAccount> userManag
         var passwordReply = await TryUpdatePassword( userReply.Data, request );
         return passwordReply;
     }
+    internal async Task<Replies<string>> GenerateRecoveryCodes( string userId )
+    {
+        var userReply = await _userManager.FindById( userId );
+        if (!userReply)
+            return Replies<string>.UserNotFound();
+
+        var codes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync( userReply.Data, 3 );
+        if (codes is null)
+            LogError( "Failed to generate recovery codes." );
+        return codes is not null
+            ? Replies<string>.Success( codes )
+            : Replies<string>.ServerError();
+    }
     internal async Task<IReply> Disable2Fa( string userId )
     {
         var userReply = await _userManager.FindById( userId );
