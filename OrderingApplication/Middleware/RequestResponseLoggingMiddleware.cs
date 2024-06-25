@@ -57,8 +57,9 @@ internal sealed class RequestResponseLoggingMiddleware( RequestDelegate next )
     static async Task<string> FormatResponse( HttpContext context, MemoryStream responseBody )
     {
         context.Response.Body.Seek( 0, SeekOrigin.Begin );
-        var responseText = await new StreamReader( responseBody ).ReadToEndAsync();
+        //var responseText = await new StreamReader( responseBody ).ReadToEndAsync();
         var endpointPath = context.Request.Path;
-        return $"Endpoint Response: {endpointPath} : Status Code = {context.Response.StatusCode} : Body = {responseText}";
+        return $"Endpoint Response: {endpointPath} : Status Code = {context.Response.StatusCode}";
+        // return $"Endpoint Response: {endpointPath} : Status Code = {context.Response.StatusCode} : Body = {responseText}";
     }
 }
