@@ -60,6 +60,27 @@ internal sealed class CartRepository( CartDbContext database ) : ICartRepository
             ? IReply.Success()
             : IReply.ServerError();
     }
+    public async Task<Reply<bool>> UpdateBulk( string userId, List<CartItem> itemsFromClient )
+    {
+        IQueryable<CartItem> items = _database.CartItems; // because of compiler ling "where" ambiguity error with IEnumerable
+        var existingCartItems = await items
+            .Where( c => c.UserId == userId )
+            .ToListAsync();
+
+        foreach ( CartItem i in itemsFromClient)
+        {
+            var existing = existingCartItems.FirstOrDefault( c => c.ProductId == i.ProductId );
+            if (existing is null)
+                continue;
+            existing.Quantity = i.Quantity;
+            _database.CartItems.Update( existing );
+        }
+
+        var saveResult = await _database.SaveChangesAsync();
+        return saveResult > 0
+            ? IReply.Success()
+            : IReply.ServerError();
+    }
     public async Task<Reply<bool>> Delete( string userId, Guid productId )
     {
         var existing = await _database.CartItems

@@ -23,6 +23,11 @@ internal static class CartEndpoints
                 await Update( item, http, repository ) )
             .RequireAuthorization();
 
+        app.MapPut( "api/cart/updateBulk",
+                static async ( [FromBody] List<CartItemDto> items, HttpContext http, ICartRepository repository ) =>
+                await UpdateBulk( items, http, repository ) )
+            .RequireAuthorization();
+
         app.MapDelete( "api/cart/delete",
                 static async ( [FromQuery] Guid productId, HttpContext http, ICartRepository repository ) =>
                 await Delete( productId, http, repository ) )
@@ -47,6 +52,11 @@ internal static class CartEndpoints
     static async Task<IResult> Update( CartItemDto item, HttpContext http, ICartRepository repository )
     {
         var reply = await repository.Update( http.UserId(), item.ProductId, item.Quantity );
+        return reply.GetIResult();
+    }
+    static async Task<IResult> UpdateBulk( List<CartItemDto> items, HttpContext http, ICartRepository repository )
+    {
+        var reply = await repository.UpdateBulk( http.UserId(), items.Models() );
         return reply.GetIResult();
     }
     static async Task<IResult> Delete( Guid productId, HttpContext http, ICartRepository repository )
