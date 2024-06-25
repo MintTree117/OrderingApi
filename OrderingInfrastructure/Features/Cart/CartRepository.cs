@@ -1,5 +1,4 @@
-using System.Data;
-using Dapper;
+using Microsoft.EntityFrameworkCore;
 using OrderingDomain.Cart;
 using OrderingDomain.ReplyTypes;
 
@@ -9,93 +8,80 @@ internal sealed class CartRepository( CartDbContext database ) : ICartRepository
 {
     readonly CartDbContext _database = database;
 
-    public async Task<Replies<CartItem>> GetUpdatedCart( string userId, List<CartItem> itemsFromClient )
+    public async Task<Replies<CartItem>> PostGet( string userId, List<CartItem> itemsFromClient )
     {
-        const string sql =
-            $"""
-             MERGE INTO Cart AS target
-             USING (
-                 SELECT {CartDbConsts.UserId}, {CartDbConsts.ProductId}, {CartDbConsts.Quantity}, GETDATE() AS {CartDbConsts.Timestamp}
-                 FROM {CartDbConsts.CartItems}
-             ) AS source
-             ON target.{CartDbConsts.UserId} = source.{CartDbConsts.UserId} AND target.{CartDbConsts.ProductId} = source.{CartDbConsts.ProductId}
-             WHEN MATCHED THEN
-                 UPDATE SET {CartDbConsts.Quantity} = target.{CartDbConsts.Quantity} + source.{CartDbConsts.Quantity}, {CartDbConsts.Timestamp} = GETDATE()
-             WHEN NOT MATCHED THEN
-                 INSERT ({CartDbConsts.UserId}, {CartDbConsts.ProductId}, {CartDbConsts.Quantity}, {CartDbConsts.Timestamp})
-                 VALUES (source.{CartDbConsts.UserId}, source.{CartDbConsts.ProductId}, source.{CartDbConsts.Quantity}, source.{CartDbConsts.Timestamp});
-             """;
+        IQueryable<CartItem> items = _database.CartItems; // because of compiler ling "where" ambiguity error with IEnumerable
+        var existingCartItems = await items
+            .Where( c => c.UserId == userId )
+            .ToListAsync();
 
-        DataTable table = GetCartItemsTable( userId, itemsFromClient );
-        DynamicParameters parameters = new();
-        parameters.Add( CartDbConsts.UserId, userId );
-        parameters.Add( CartDbConsts.CartItems, table.AsTableValuedParameter( CartDbConsts.CartItemsTvp ) );
-        return await _database.QueryAsync<CartItem>( sql, parameters );
-    }
-    public async Task<Reply<bool>> AddOrUpdate( Guid productId, string userId, int quantity )
-    {
-        const string sql =
-            $"""
-             MERGE INTO {CartDbConsts.CartItems} AS target
-             USING (
-                 VALUES (@{CartDbConsts.UserId}, @{CartDbConsts.ProductId}, @{CartDbConsts.Quantity}, GETDATE()) -- Parameters for UserID, ProductID, and Quantity
-             ) AS source ({CartDbConsts.UserId}, {CartDbConsts.ProductId}, {CartDbConsts.Quantity}, {CartDbConsts.Timestamp})
-             ON target.{CartDbConsts.UserId} = source.{CartDbConsts.UserId} AND target.{CartDbConsts.ProductId} = source.{CartDbConsts.ProductId}
-             WHEN MATCHED THEN
-                 UPDATE SET {CartDbConsts.Quantity} = target.{CartDbConsts.Quantity} + source.{CartDbConsts.Quantity}, {CartDbConsts.Timestamp} = GETDATE() -- Update existing record
-             WHEN NOT MATCHED THEN
-                 INSERT ({CartDbConsts.UserId}, {CartDbConsts.ProductId}, {CartDbConsts.Quantity}, Timestamp)
-                 VALUES (source.{CartDbConsts.UserId}, source.{CartDbConsts.ProductId}, source.{CartDbConsts.Quantity}, source.{CartDbConsts.Timestamp}); -- Insert new record
-             """;
-
-        DynamicParameters parameters = new();
-        parameters.Add( CartDbConsts.ProductId, productId );
-        parameters.Add( CartDbConsts.UserId, userId );
-        parameters.Add( CartDbConsts.Quantity, quantity );
-        return await _database.ExecuteAsync( sql, parameters );
-    }
-    public async Task<Reply<bool>> Delete( Guid productId, string userId )
-    {
-        const string sql =
-            """
-            DELETE FROM Cart_Items
-            WHERE UserId = @UserId
-            AND ProductId = @ProductId;
-            """;
-
-        DynamicParameters parameters = new();
-        parameters.Add( CartDbConsts.ProductId, productId );
-        parameters.Add( CartDbConsts.UserId, userId );
-        return await _database.ExecuteAsync( sql, parameters );
-    }
-    public async Task<Reply<bool>> Empty( string userId )
-    {
-        const string sql =
-            """
-            DELETE FROM Cart_Items
-            WHERE UserId = @UserId;
-            """;
-
-        DynamicParameters parameters = new();
-        parameters.Add( CartDbConsts.UserId, userId );
-        return await _database.ExecuteAsync( sql, parameters );
-    }
-
-    static DataTable GetCartItemsTable( string userId, List<CartItem> items )
-    {
-        DataTable table = new();
-        table.Columns.Add( CartDbConsts.ProductId, typeof( int ) );
-        table.Columns.Add( CartDbConsts.UserId, typeof( int ) );
-        table.Columns.Add( CartDbConsts.Quantity, typeof( int ) );
-
-        foreach ( CartItem d in items ) {
-            DataRow row = table.NewRow();
-            row[CartDbConsts.ProductId] = d.ProductId;
-            row[CartDbConsts.UserId] = userId;
-            row[CartDbConsts.Quantity] = d.Quantity;
-            table.Rows.Add( row );
+        foreach ( var newItem in itemsFromClient )
+        {
+            var existing = existingCartItems.FirstOrDefault( c => c.ProductId == newItem.ProductId );
+            if (existing is not null)
+            {
+                existing.Quantity = newItem.Quantity;
+                _database.CartItems.Update( existing );
+            }
+            else
+            {
+                newItem.UserId = userId;
+                existingCartItems.Add( newItem );
+                _database.CartItems.Add( newItem );
+            }
         }
+        
+        await _database.SaveChangesAsync();
+        return Replies<CartItem>.Success( existingCartItems );
+    }
+    public async Task<Reply<bool>> Add( string userId, Guid productId )
+    {
+        var existing = await _database.CartItems
+            .FirstOrDefaultAsync( c => c.UserId == userId && c.ProductId == productId );
+        if (existing is not null)
+            return IReply.Conflict( "Item already in cart." );
 
-        return table;
+        var addResult = _database.CartItems.Add( new CartItem( userId, productId, 1 ) );
+        var saveResult = await _database.SaveChangesAsync();
+        return addResult.State == EntityState.Added && saveResult > 0
+            ? IReply.Success()
+            : IReply.ServerError();
+    }
+    public async Task<Reply<bool>> Update( string userId, Guid productId, int quantity )
+    {
+        var existing = await _database.CartItems
+            .FirstOrDefaultAsync( c => c.UserId == userId && c.ProductId == productId );
+        if (existing is null)
+            return IReply.Conflict( "Item not in cart." );
+
+        existing.Quantity = quantity;
+        var saveResult = await _database.SaveChangesAsync();
+        return saveResult > 0
+            ? IReply.Success()
+            : IReply.ServerError();
+    }
+    public async Task<Reply<bool>> Delete( string userId, Guid productId )
+    {
+        var existing = await _database.CartItems
+            .FirstOrDefaultAsync( c => c.UserId == userId && c.ProductId == productId );
+        if (existing is null)
+            return IReply.Conflict( "Item not in cart." );
+
+        var removeResult = _database.CartItems.Remove( existing );
+        var saveResult = await _database.SaveChangesAsync();
+        return removeResult.State == EntityState.Deleted && saveResult > 0
+            ? IReply.Success()
+            : IReply.ServerError();
+    }
+    public async Task<Reply<bool>> Clear( string userId )
+    {
+        var items = _database.CartItems
+            .Where( c => c.UserId == userId );
+        
+        _database.CartItems.RemoveRange( items );
+        var saveResult = await _database.SaveChangesAsync();
+        return saveResult > 0
+            ? IReply.Success()
+            : IReply.ServerError();
     }
 }

@@ -4,7 +4,7 @@ public sealed class CartItem
 {
     public CartItem() { }
 
-    public CartItem( Guid userId, Guid productId, int quantity )
+    public CartItem( string userId, Guid productId, int quantity )
     {
         UserId = userId;
         ProductId = productId;
@@ -12,10 +12,9 @@ public sealed class CartItem
     }
 
     public static CartItem WithoutUserId( Guid productId, int quantity ) => 
-        new( Guid.Empty, productId, quantity );
+        new( string.Empty, productId, quantity );
 
-    public Guid Id { get; set; }
-    public Guid UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
     public Guid ProductId { get; set; }
     public int Quantity { get; set; }
 }
