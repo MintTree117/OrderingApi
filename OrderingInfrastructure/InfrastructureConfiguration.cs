@@ -28,8 +28,8 @@ public static class InfrastructureConfiguration
         builder.Services.AddScoped<IOrderingRepository, OrderingRepository>();
         builder.Services.AddScoped<IOrderingUtilityRepository, OrderingUtilityRepository>();
 
-        builder.Services.AddSingleton<CartDbContext>();
-        builder.Services.AddSingleton<ICartRepository, CartRepository>();
+        builder.Services.AddDbContext<CartDbContext>( GetCartDatabaseOptions );
+        builder.Services.AddScoped<ICartRepository, CartRepository>();
 
         builder.Services.AddDbContext<BillingDbContext>( GetBillingDatabaseOptions );
         builder.Services.AddScoped<IBillingRepository, BillingRepository>();
@@ -42,6 +42,10 @@ public static class InfrastructureConfiguration
     static void GetOrderingDatabaseOptions( DbContextOptionsBuilder options )
     {
         options.UseInMemoryDatabase( "OrderingDb" );
+    }
+    static void GetCartDatabaseOptions( DbContextOptionsBuilder options )
+    {
+        options.UseInMemoryDatabase( "CartDb" );
     }
     static void GetBillingDatabaseOptions( DbContextOptionsBuilder options )
     {

@@ -19,8 +19,8 @@ app.UseHttpsRedirection();
 // app.UseStaticFiles(); // Uncomment if needed
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseCors();
 app.UseRouting();
+app.UseCors();
 //app.UseAuthentication();
 app.UseAuthorization();
 app.UseEndpoints();

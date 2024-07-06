@@ -25,7 +25,7 @@ internal sealed class AccountRegistrationSystem( UserManager<UserAccount> userMa
     }
     async Task<Reply<UserAccount>> CreateIdentity( RegisterAccountRequest request )
     {
-        // TODO: This is a hotfix because user-manager doesnt seem to have this constraint by default...
+        // TODO: This is a hotfix because user-manager doesn't seem to have this constraint by default...
         if (request.Username.Length is < 6 or > 24)
             return Reply<UserAccount>.BadRequest( "Username must be between 6 and 24 characters." );
         
