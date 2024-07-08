@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using OrderingApplication.Extentions;
 using OrderingApplication.Features.Users.Registration.Types;
 using OrderingApplication.Features.Users.Utilities;
 using OrderingDomain.ReplyTypes;

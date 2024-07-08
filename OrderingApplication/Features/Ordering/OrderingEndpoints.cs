@@ -10,6 +10,11 @@ internal static class OrderingEndpoints
 {
     internal static void MapOrderingEndpoints( this IEndpointRouteBuilder app )
     {
+        app.MapPost( "api/orders/getNew",
+                static async ( [FromBody] string warehouseToken, HttpContext http, WarehouseOrderingSystem system ) =>
+                await GetNewWarehouseOrders( warehouseToken, http, system ) )
+            .RequireAuthorization( Consts.DefaultPolicy );
+        
         app.MapPost( "api/orders/place",
                 static async ( [FromBody] OrderPlacementRequest place, HttpContext http, OrderingSystem system ) =>
                 await PlaceOrder( place, http, system ) )
@@ -26,6 +31,10 @@ internal static class OrderingEndpoints
             .RequireAuthorization( Consts.DefaultPolicy );
     }
 
+    static async Task<IResult> GetNewWarehouseOrders( string warehouseToken, HttpContext http, WarehouseOrderingSystem system )
+    {
+        return Results.Ok();
+    }
     static async Task<IResult> PlaceOrder( OrderPlacementRequest order, HttpContext http, OrderingSystem system )
     {
         var reply = await system.PlaceOrder( http.UserId(), order );

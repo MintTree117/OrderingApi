@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OrderingDomain.Users;
-using OrderingDomain.ValueTypes;
 
 namespace OrderingInfrastructure.Features.Users;
 

@@ -26,7 +26,7 @@ internal sealed class RequestResponseLoggingMiddleware( RequestDelegate next )
             await _next( context );
 
             // Log the response
-            var responseLog = await FormatResponse( context, responseBody );
+            var responseLog = FormatResponse( context, responseBody );
             EndpointLogger.LogInformation( responseLog );
 
             // Copy the contents of the new memory stream (which contains the response) to the original stream
@@ -54,7 +54,7 @@ internal sealed class RequestResponseLoggingMiddleware( RequestDelegate next )
         var message = $"Endpoint Hit: {request.Path}";
         return message;
     }
-    static async Task<string> FormatResponse( HttpContext context, MemoryStream responseBody )
+    static string FormatResponse( HttpContext context, MemoryStream responseBody )
     {
         context.Response.Body.Seek( 0, SeekOrigin.Begin );
         //var responseText = await new StreamReader( responseBody ).ReadToEndAsync();
