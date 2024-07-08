@@ -30,7 +30,7 @@ internal abstract class DatabaseService<TService>( DbContext context, ILogger<TS
         Logger.LogError( e, e.Message );
         return Reply<T>.Failure( MsgDbException );
     }
-    protected Replies<T> HandleDbExceptionReplies<T>( Exception e )
+    protected Replies<T> ProcessDbExceptionReplies<T>( Exception e )
     {
         Logger.LogError( e, e.Message );
         return Replies<T>.Fail( MsgDbException );

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Orders;
+using OrderingDomain.Orders.Base;
+using OrderingDomain.Orders.Meta;
 using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;
@@ -9,102 +11,115 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
     : DatabaseService<OrderingRepository>( database, logger ), IOrderingRepository
 {
     readonly OrderingDbContext _database = database;
-    
+
     public async Task<Reply<bool>> InsertOrder( Order order )
     {
-        try {
-            await _database.ActiveOrders.AddAsync( order );
+        try
+        {
+            await _database.Orders.AddAsync( order );
             return await SaveAsync();
         }
-        catch ( Exception e ) {
+        catch ( Exception e )
+        {
+            return ProcessDbException<bool>( e );
+        }
+    }
+    public async Task<Reply<bool>> InsertOrderGroups( IEnumerable<OrderGroup> orderGroups )
+    {
+        try
+        {
+            await _database.AddRangeAsync( orderGroups );
+            return await SaveAsync();
+        }
+        catch ( Exception e )
+        {
             return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<bool>> InsertOrderLines( IEnumerable<OrderLine> orderLines )
     {
-        try {
+        try
+        {
             await _database.AddRangeAsync( orderLines );
             return await SaveAsync();
         }
-        catch ( Exception e ) {
+        catch ( Exception e )
+        {
             return ProcessDbException<bool>( e );
         }
     }
-    public async Task<Reply<bool>> InsertOrderItems( IEnumerable<OrderItem> orderItems )
+    public async Task<Reply<bool>> InsertOrderProblem( OrderProblem problem )
     {
-        try {
-            await _database.ActiveOrderItems.AddRangeAsync( orderItems );
+        try
+        {
+            EntityEntry<OrderProblem> entry = await _database.OrderProblems.AddAsync( problem );
+            if (entry.State != EntityState.Added)
+                return IReply.ServerError();
             return await SaveAsync();
         }
-        catch ( Exception e ) {
+        catch ( Exception e )
+        {
             return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<bool>> DeleteOrderData( Guid orderId )
     {
-        try {
-            List<OrderItem> orderItems = await _database.ActiveOrderItems.Where( i => i.OrderId == orderId ).ToListAsync();
-            List<OrderLine> orderLines = await _database.ActiveOrderLines.Where( l => l.OrderId == orderId ).ToListAsync();
-            Order? order = await _database.ActiveOrders.FirstOrDefaultAsync( o => o.Id == orderId );
+        try
+        {
+            Order? order = await _database.Orders.FirstOrDefaultAsync( o => o.Id == orderId );
+            List<OrderGroup> orderGroups = await _database.OrderGroups.Where( i => i.OrderId == orderId ).ToListAsync();
+            List<OrderLine> orderLines = await _database.OrderLines.Where( l => l.OrderId == orderId ).ToListAsync();
 
-            _database.ActiveOrderItems.RemoveRange( orderItems );
-            _database.ActiveOrderLines.RemoveRange( orderLines );
+            _database.OrderLines.RemoveRange( orderLines );
+            _database.OrderGroups.RemoveRange( orderGroups );
             if (order is not null)
-                _database.ActiveOrders.Remove( order );
+                _database.Orders.Remove( order );
 
             return await SaveAsync();
         }
-        catch ( Exception e ) {
+        catch ( Exception e )
+        {
             return ProcessDbException<bool>( e );
         }
     }
     public async Task<Reply<Order>> GetOrderById( Guid orderId )
     {
-        try {
-            Order? order = await _database.ActiveOrders.FirstOrDefaultAsync( o => o.Id == orderId );
+        try
+        {
+            Order? order = await _database.Orders.FirstOrDefaultAsync( o => o.Id == orderId );
             return order is not null
                 ? Reply<Order>.Success( order )
                 : Reply<Order>.Failure( $"Order {orderId} not found in db." );
         }
-        catch ( Exception e ) {
+        catch ( Exception e )
+        {
             return ProcessDbException<Order>( e );
         }
     }
-    public async Task<Replies<OrderLine>> GetOrderLinesByOrderId( Guid orderId )
+    public async Task<Reply<OrderGroup>> GetOrderGroupById( Guid orderGroupId )
     {
-        try {
-            return Replies<OrderLine>.Success(
-                await _database.ActiveOrderLines.Where( l => l.OrderId == orderId ).ToListAsync() );
+        try
+        {
+            OrderGroup? orderGroup = await _database.OrderGroups.FirstOrDefaultAsync( o => o.Id == orderGroupId );
+            return orderGroup is not null
+                ? Reply<OrderGroup>.Success( orderGroup )
+                : Reply<OrderGroup>.Failure( $"Order {orderGroupId} not found in db." );
         }
-        catch ( Exception e ) {
-            return HandleDbExceptionReplies<OrderLine>( e );
+        catch ( Exception e )
+        {
+            return ProcessDbException<OrderGroup>( e );
         }
     }
-    public async Task<Replies<OrderItem>> GetItemsForLineById( Guid orderId, Guid orderLineId )
+    public async Task<Replies<OrderGroup>> GetOrderGroupsForOrder( Guid orderId )
     {
-        try {
-            return Replies<OrderItem>.Success(
-                await _database.ActiveOrderItems.Where( i => i.OrderId == orderId && i.OrderLineId == orderLineId ).ToListAsync() );
+        try
+        {
+            var orderGroups = await _database.OrderGroups.Where( o => o.Id == orderId ).ToListAsync();
+            return Replies<OrderGroup>.Success( orderGroups );
         }
-        catch ( Exception e ) {
-            return HandleDbExceptionReplies<OrderItem>( e );
-        }
-    }
-    public async Task<Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>> GetItemsForOrderLines( IEnumerable<OrderLine> lines )
-    {
-        try {
-            Dictionary<OrderLine, IEnumerable<OrderItem>> items = [];
-
-            foreach ( OrderLine l in lines )
-                if ((await GetItemsForLineById( l.OrderId, l.Id )).OutFailure( out Replies<OrderItem> itemsResult ))
-                    return Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>.Failure( itemsResult );
-                else
-                    items.TryAdd( l, itemsResult.Enumerable );
-
-            return Reply<Dictionary<OrderLine, IEnumerable<OrderItem>>>.Success( items );
-        }
-        catch ( Exception e ) {
-            return ProcessDbException<Dictionary<OrderLine, IEnumerable<OrderItem>>>( e );
+        catch ( Exception e )
+        {
+            return ProcessDbExceptionReplies<OrderGroup>( e );
         }
     }
 }

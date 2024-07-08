@@ -1,11 +1,10 @@
 namespace OrderingDomain.ValueTypes;
 
-public readonly record struct Contact( 
-    int Id, 
-    string Phone, 
+public readonly record struct Contact(
+    string Name, 
     string Email, 
-    string Name )
+    string? Phone )
 {
     public static Contact Empty() => 
-        new( -1, string.Empty, string.Empty, string.Empty );
+        new( string.Empty, string.Empty, string.Empty );
 }

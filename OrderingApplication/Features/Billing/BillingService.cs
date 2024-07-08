@@ -1,5 +1,6 @@
 using OrderingDomain.Billing;
 using OrderingDomain.Orders;
+using OrderingDomain.Orders.Base;
 using OrderingDomain.ReplyTypes;
 
 namespace OrderingApplication.Features.Billing;

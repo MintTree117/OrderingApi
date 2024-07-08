@@ -16,7 +16,7 @@ internal readonly record struct AddressDto(
         return dtos;
     }
     internal static AddressDto FromModel( UserAddress model ) =>
-        new( model.Id, model.IsPrimary, model.Name, model.WorldGridPosX, model.WorldGridPosY );
+        new( model.Id, model.IsPrimary, model.Name, model.PosX, model.PosY );
     internal UserAddress ToModel( string identityId ) =>
         new( Id, identityId, IsPrimary, Name, WorldGridPosX, WorldGridPosY );
 }

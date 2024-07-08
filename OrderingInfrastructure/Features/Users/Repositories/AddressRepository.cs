@@ -32,7 +32,7 @@ internal sealed class AddressRepository( UserDbContext database, ILogger<Address
             return Replies<UserAddress>.Success( result );
         }
         catch ( Exception e ) {
-            return HandleDbExceptionReplies<UserAddress>( e );
+            return ProcessDbExceptionReplies<UserAddress>( e );
         }
     }
     public async Task<Reply<PagedResult<UserAddress>>> GetAllByUserIdPaged( string userId, int page, int pageSize )

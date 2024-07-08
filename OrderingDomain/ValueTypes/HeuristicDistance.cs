@@ -1,4 +1,4 @@
-namespace OrderingApplication.Features.Ordering.Dtos;
+namespace OrderingDomain.ValueTypes;
 
 public readonly record struct HeuristicDistance(
     int MagnitudeX,

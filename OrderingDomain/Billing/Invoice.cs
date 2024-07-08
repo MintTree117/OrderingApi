@@ -1,4 +1,4 @@
-using OrderingDomain.Orders;
+using OrderingDomain.Orders.Base;
 using OrderingDomain.ValueTypes;
 
 namespace OrderingDomain.Billing;
@@ -15,7 +15,7 @@ public sealed class Invoice
         new() {
             OrderId = order.Id,
             InvoiceDate = DateTime.Now,
-            OrderDate = order.OrderDate,
+            OrderDate = order.DatePlaced,
             Pricing = order.Pricing
         };
 }

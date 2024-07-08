@@ -22,7 +22,7 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
         }
         catch ( Exception e )
         {
-            return HandleDbExceptionReplies<UserSession>( e );
+            return ProcessDbExceptionReplies<UserSession>( e );
         }
     }
     public async Task<Reply<UserSession>> GetSession( string sessionId, string userId )

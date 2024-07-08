@@ -1,11 +1,11 @@
 using OrderingDomain.ValueTypes;
 
-namespace OrderingDomain.Orders;
+namespace OrderingDomain.Orders.Base;
 
-public sealed class OrderLocation
+public sealed class Warehouse
 {
     public Guid Id { get; set; } = Guid.Empty;
-    public WorldGridPos WorldGridPos { get; set; }
+    public Address Address { get; set; }
     public string Name { get; set; } = string.Empty;
     public string ApiUrl { get; set; } = string.Empty;
 }

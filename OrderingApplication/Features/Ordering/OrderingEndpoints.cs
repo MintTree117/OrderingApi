@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using OrderingApplication.Features.Ordering.Dtos;
-using OrderingApplication.Features.Ordering.Systems;
 using OrderingApplication.Extentions;
+using OrderingApplication.Features.Ordering.Services;
+using OrderingApplication.Utilities;
 
 namespace OrderingApplication.Features.Ordering;
 
@@ -9,18 +10,41 @@ internal static class OrderingEndpoints
 {
     internal static void MapOrderingEndpoints( this IEndpointRouteBuilder app )
     {
-        const string baseRoute = "api/post/orders";
+        app.MapPost( "api/orders/place",
+                static async ( [FromBody] OrderPlacementRequest place, HttpContext http, OrderingSystem system ) =>
+                await PlaceOrder( place, http, system ) )
+            .RequireAuthorization( Consts.DefaultPolicy );
 
-        app.MapPost( $"{baseRoute}/place", static async ( [FromBody] OrderPlaceRequest order, OrderPlacingSystem service ) =>
-               (await service.PlaceOrder( order )).GetIResult() )
-           .RequireAuthorization();
+        app.MapPost( "api/orders/update",
+                static async ( [FromBody] OrderUpdateRequest update, OrderingSystem system ) =>
+                await UpdateOrder( update, system ) )
+            .RequireAuthorization( Consts.DefaultPolicy );
 
-        app.MapPost( $"{baseRoute}/update", static async ( [FromBody] OrderUpdateRequest update, OrderUpdatingSystem service ) =>
-               (await service.UpdateOrder( update )).GetIResult() )
-           .RequireAuthorization();
+        app.MapPost( "api/orders/cancel",
+                static async ( [FromBody] OrderCancelRequest cancel, OrderingSystem system ) =>
+                await CancelOrder( cancel, system ) )
+            .RequireAuthorization( Consts.DefaultPolicy );
+    }
 
-        app.MapPost( $"{baseRoute}/cancel", static async ( [FromBody] OrderCancelRequest cancel, OrderCancellingSystem service ) =>
-               (await service.CancelOrder( cancel )).GetIResult() )
-           .RequireAuthorization();
+    static async Task<IResult> PlaceOrder( OrderPlacementRequest order, HttpContext http, OrderingSystem system )
+    {
+        var reply = await system.PlaceOrder( http.UserId(), order );
+        return reply
+            ? Results.Ok( true )
+            : Results.Problem( reply.GetMessage() );
+    }
+    static async Task<IResult> UpdateOrder( OrderUpdateRequest update, OrderingSystem system )
+    {
+        var reply = await system.UpdateOrder( update );
+        return reply
+            ? Results.Ok( true )
+            : Results.Problem( reply.GetMessage() );
+    }
+    static async Task<IResult> CancelOrder( OrderCancelRequest cancel, OrderingSystem system )
+    {
+        var reply = await system.CancelOrder( cancel );
+        return reply
+            ? Results.Ok( true )
+            : Results.Problem( reply.GetMessage() );
     }
 }

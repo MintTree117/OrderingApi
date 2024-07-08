@@ -26,7 +26,6 @@ public static class InfrastructureConfiguration
 
         builder.Services.AddDbContext<OrderingDbContext>( GetOrderingDatabaseOptions );
         builder.Services.AddScoped<IOrderingRepository, OrderingRepository>();
-        builder.Services.AddScoped<IOrderingUtilityRepository, OrderingUtilityRepository>();
 
         builder.Services.AddDbContext<CartDbContext>( GetCartDatabaseOptions );
         builder.Services.AddScoped<ICartRepository, CartRepository>();

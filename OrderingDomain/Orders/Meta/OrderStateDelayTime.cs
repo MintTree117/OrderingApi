@@ -1,4 +1,4 @@
-namespace OrderingDomain.Orders;
+namespace OrderingDomain.Orders.Meta;
 
 public class OrderStateDelayTime
 {
