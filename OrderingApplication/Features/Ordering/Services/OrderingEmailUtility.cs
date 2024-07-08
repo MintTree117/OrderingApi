@@ -10,18 +10,22 @@ internal static class OrderingEmailUtility
     {
         var emailHtml = new StringBuilder();
 
-        emailHtml.AppendLine("""
-        <html>
-        <head>
-        <style>
-        body { font-family: Arial, sans-serif; }
-        .order-details { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .order-details th, .order-details td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
-        .order-details th { background-color: #f2f2f2; }
-        .order-header { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-        .order-section { margin-bottom: 20px; }
-        </style>
-        </head>
+        const string top = """
+                           <html>
+                           <head>
+                           <style>
+                           body { font-family: Arial, sans-serif; }
+                           .order-details { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                           .order-details th, .order-details td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
+                           .order-details th { background-color: #f2f2f2; }
+                           .order-header { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+                           .order-section { margin-bottom: 20px; }
+                           </style>
+                           </head>
+                           """;
+
+        emailHtml.AppendLine( top );
+        emailHtml.AppendLine($"""
         <body>
         <div class='order-header'>Order Confirmation</div>
         <div class='order-section'>Order ID: {order.Id}</div>
@@ -33,13 +37,13 @@ internal static class OrderingEmailUtility
         <div class='order-section'>Email: {order.Contact.Email}</div>
         <div class='order-section'>Phone: {order.Contact.Phone}</div>
         <div class='order-header'>Shipping Address</div>
-        <div class='order-section'>{order.ShippingAddress.Street}</div>
-        <div class='order-section'>{order.ShippingAddress.City}, {order.ShippingAddress.State} {order.ShippingAddress.ZipCode}</div>
-        <div class='order-section'>{order.ShippingAddress.Country}</div>
+        <div class='order-section'>{order.ShippingAddress.Name}</div>
+        <div class='order-section'>{order.ShippingAddress.PosX}</div>
+        <div class='order-section'>{order.ShippingAddress.PosY}</div>
         <div class='order-header'>Billing Address</div>
-        <div class='order-section'>{order.BillingAddress.Street}</div>
-        <div class='order-section'>{order.BillingAddress.City}, {order.BillingAddress.State} {order.BillingAddress.ZipCode}</div>
-        <div class='order-section'>{order.BillingAddress.Country}</div>
+        <div class='order-section'>{order.BillingAddress.Name}</div>
+        <div class='order-section'>{order.BillingAddress.PosX}</div>
+        <div class='order-section'>{order.BillingAddress.PosY}</div>
         <div class='order-header'>Order Details</div>
         <table class='order-details'>
         <tr>

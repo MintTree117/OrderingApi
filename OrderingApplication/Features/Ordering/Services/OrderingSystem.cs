@@ -36,7 +36,7 @@ internal sealed class OrderingSystem(
         if (!catalogReply)
             return IReply.ServerError( catalogReply.GetMessage() );
         
-        GenerateOrderModels( userId, request, catalogReply.Data, out var order, out var orderGroups, out var orderLines );
+        Order order = GenerateOrderModel( userId, request, catalogReply.Data );
 
         /*var warehouseReply = await SendOrdersToWarehouses( userId, order, orderLines );
         if (!warehouseReply)
@@ -50,11 +50,11 @@ internal sealed class OrderingSystem(
         _emailSender.SendHtmlEmail( user.Email!, "Order Placed", email );
         return insertReply;
     }
-    static void GenerateOrderModels( string? userId,  OrderPlacementRequest request, List<OrderCatalogItem> catalogItems, out Order order, out HashSet<OrderGroup> orderGroups, out Dictionary<OrderGroup, HashSet<OrderLine>> orderLines )
+    static Order GenerateOrderModel( string? userId,  OrderPlacementRequest request, List<OrderCatalogItem> catalogItems )
     {
-        order = Order.New( userId, request.GetContact(), request.BillingAddress, request.ShippingAddress );
-        orderGroups = [];
-        orderLines = [];
+        Order order = Order.New( userId, request.GetContact(), request.BillingAddress, request.ShippingAddress );
+        HashSet<OrderGroup> orderGroups = [];
+        Dictionary<OrderGroup, HashSet<OrderLine>> orderLines = [];
 
         foreach ( OrderCatalogItem item in catalogItems )
         {
@@ -87,6 +87,8 @@ internal sealed class OrderingSystem(
         foreach ( var kvp in orderLines )
             kvp.Key.OrderLines = kvp.Value.ToList();
         order.OrderGroups = orderGroups.ToList();
+
+        return order;
     }
     async Task<Reply<bool>> SendOrdersToWarehouses( string? userId, Order order, Dictionary<OrderGroup, HashSet<OrderLine>> orderLines )
     {

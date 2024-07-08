@@ -1,14 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using OrderingDomain.Orders.Base;
 using OrderingDomain.Orders.Meta;
+using OrderingInfrastructure.Features.Ordering.Configuration;
 
 namespace OrderingInfrastructure.Features.Ordering;
 
 internal sealed class OrderingDbContext( DbContextOptions<OrderingDbContext> options ) 
     : DbContext( options )
 {
-    public required DbSet<OrderStateDelayTime> DelayTimes { get; init; }
-    public required DbSet<OrderStateExpireTime> ExpireTimes { get; init; }
+    protected override void OnModelCreating( ModelBuilder builder )
+    {
+        builder.ApplyConfiguration( new OrderConfiguration() );
+        builder.ApplyConfiguration( new OrderGroupConfiguration() );
+        builder.ApplyConfiguration( new OrderLineConfiguration() );
+
+        base.OnModelCreating( builder );
+    }
     
     public required DbSet<Order> Orders { get; init; }
     public required DbSet<OrderGroup> OrderGroups { get; init; }
