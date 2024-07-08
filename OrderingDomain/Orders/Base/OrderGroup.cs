@@ -9,6 +9,7 @@ public sealed class OrderGroup
     public Guid WarehouseId { get; set; }
     public DateTime LastUpdated { get; set; }
     public OrderState State { get; set; }
+    public List<OrderLine> OrderLines { get; set; } = [];
 
     public void Update( OrderState state )
     {

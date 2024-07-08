@@ -45,7 +45,8 @@ internal sealed class OrderingSystem(
         if (!insertReply)
             return IReply.ServerError();
         
-        SendOrderPlacedEmail();
+        string email = OrderingEmailUtility.GenerateOrderPlacedEmail( order );
+        _emailSender.SendHtmlEmail( request.GetContact().Email, "Order Placed", email );
         return insertReply;
     }
     static void GenerateOrderModels( string? userId, OrderPlacementRequest request, List<OrderCatalogItem> catalogItems, out Order order, out HashSet<OrderGroup> orderGroups, out Dictionary<OrderGroup, HashSet<OrderLine>> orderLines )
@@ -81,6 +82,10 @@ internal sealed class OrderingSystem(
                 orderLines.Add( group, [] );
             orderLines[group].Add( line );
         }
+
+        foreach ( var kvp in orderLines )
+            kvp.Key.OrderLines = kvp.Value.ToList();
+        order.OrderGroups = orderGroups.ToList();
     }
     async Task<Reply<bool>> SendOrdersToWarehouses( string? userId, Order order, Dictionary<OrderGroup, HashSet<OrderLine>> orderLines )
     {
@@ -126,10 +131,6 @@ internal sealed class OrderingSystem(
         await CancelOrder( cancel );
         return IReply.ServerError( "Your order did not go through." );
     }
-    void SendOrderPlacedEmail()
-    {
-        
-    }
     
     internal async Task<Reply<bool>> UpdateOrder( OrderUpdateRequest update )
     {
@@ -141,11 +142,12 @@ internal sealed class OrderingSystem(
         if (!orderGroupsReply)
             return IReply.NotFound( "OrderGroup not found." );
 
-        var groupUpdate = await HandleGroupUpdate( orderGroupsReply.Enumerable, update.OrderGroupId, update.OrderState );
+        string email = orderReply.Data.Contact.Email;
+        var groupUpdate = await HandleGroupUpdate( email, orderGroupsReply.Enumerable, update.OrderGroupId, update.OrderState );
         if (!groupUpdate)
             return IReply.Fail( groupUpdate.GetMessage() );
 
-        var orderUpdate = await HandleOrderUpdate( orderReply.Data, orderGroupsReply.Enumerable, update.OrderState );
+        var orderUpdate = await HandleOrderUpdate( email, orderReply.Data, orderGroupsReply.Enumerable, update.OrderState );
         if (!orderUpdate)
             return IReply.Fail( orderUpdate.GetMessage() );
         
@@ -154,27 +156,29 @@ internal sealed class OrderingSystem(
             ? IReply.Success()
             : IReply.ServerError( dbReply.GetMessage() );
     }
-    async Task<Reply<bool>> HandleGroupUpdate( IEnumerable<OrderGroup> groups, Guid groupId, OrderState state )
+    async Task<Reply<bool>> HandleGroupUpdate( string emailAddress, IEnumerable<OrderGroup> groups, Guid groupId, OrderState state )
     {
         OrderGroup? group = groups.FirstOrDefault( g => g.Id == groupId );
         if (group is null)
             return IReply.NotFound( "OrderGroup not found." );
+
+        string email = OrderingEmailUtility.GenerateOrderGroupUpdateEmail( group, state );
+        _emailSender.SendHtmlEmail( emailAddress, "Order Placed", email );
+        
         group.Update( state );
-        SendOrderUpdatedEmail();
         return await _repo.SaveAsync();
     }
-    async Task<Reply<bool>> HandleOrderUpdate( Order order, IEnumerable<OrderGroup> groups, OrderState state )
+    async Task<Reply<bool>> HandleOrderUpdate( string emailAddress, Order order, IEnumerable<OrderGroup> groups, OrderState state )
     {
         bool same = groups.All( g => g.State == state );
         if (!same)
             return IReply.Success();
-        order.State = state;
-        SendOrderUpdatedEmail();
-        return await _repo.SaveAsync();
-    }
-    void SendOrderUpdatedEmail()
-    {
         
+        string email = OrderingEmailUtility.GenerateOrderUpdateEmail( order, state );
+        _emailSender.SendHtmlEmail( emailAddress, "Order Updated", email );
+            
+        order.State = state;
+        return await _repo.SaveAsync();
     }
     
     internal async Task<Reply<bool>> CancelOrder( OrderCancelRequest request  )
@@ -193,11 +197,8 @@ internal sealed class OrderingSystem(
             Message = request.Message
         };
         var problemReply = await _repo.InsertOrderProblem( problem );
-        SendOrderCancelledEmail();
+        string email = OrderingEmailUtility.GenerateOrderCancelledEmail( orderReply.Data, request.Message );
+        _emailSender.SendHtmlEmail( orderReply.Data.Contact.Email, "Order Cancelled", email );
         return problemReply;
-    }
-    void SendOrderCancelledEmail()
-    {
-        
     }
 }
