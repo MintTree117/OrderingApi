@@ -7,5 +7,6 @@ internal static class OrderingConfiguration
     internal static void ConfigureOrdering( this WebApplicationBuilder builder )
     {
         builder.Services.AddScoped<OrderingSystem>();
+        builder.Services.AddScoped<WarehouseOrderingSystem>();
     }
 }

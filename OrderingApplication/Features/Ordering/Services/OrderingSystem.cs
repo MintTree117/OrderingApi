@@ -12,13 +12,13 @@ using OrderingInfrastructure.Http;
 namespace OrderingApplication.Features.Ordering.Services;
 
 internal sealed class OrderingSystem( 
-    IConfiguration config, IHttpService http, IOrderingRepository repo, IEmailSender emailSender, UserManager<UserAccount> userManager )
+    IConfiguration config, IHttpService http, IOrderingRepository repo, IEmailSender emailSender, UserManager<UserAccount> userManager, ILogger<OrderingSystem> logger )
 {
     readonly IHttpService _http = http;
     readonly IOrderingRepository _repo = repo;
     readonly IEmailSender _emailSender = emailSender;
     readonly UserManager<UserAccount> _userManager = userManager;
-    readonly string _checkCatalogUrl = config.GetValue<string>( "Ordering:CheckCatalogUrl" ) ?? string.Empty;
+    readonly string _checkCatalogUrl = config.GetValue<string>( "Ordering:CheckCatalogUrl" ) ?? throw new Exception( "Failed to get CheckCatalogUrl from Configuration." );
 
     internal async Task<Reply<bool>> PlaceOrder( string? userId, OrderPlacementRequest request )
     {
@@ -29,27 +29,28 @@ internal sealed class OrderingSystem(
         UserAccount? user = await _userManager.FindByIdAsync( userId );
         if (user is null)
             return IReply.UserNotFound();
-
-        var catalogReply = await _http.TryPostObjRequest<List<OrderCatalogItem>>( _checkCatalogUrl, request.Items );
+        
+        CatalogOrderDto catalogDto = new( 
+            request.ShippingAddress.PosX, request.ShippingAddress.PosY, request.Items );
+        var catalogReply = await _http.TryPostObjRequest<List<OrderCatalogItem>>( _checkCatalogUrl, catalogDto );
         if (!catalogReply)
             return IReply.ServerError( catalogReply.GetMessage() );
         
         GenerateOrderModels( userId, request, catalogReply.Data, out var order, out var orderGroups, out var orderLines );
 
-        var warehouseReply = await SendOrdersToWarehouses( userId, order, orderLines );
+        /*var warehouseReply = await SendOrdersToWarehouses( userId, order, orderLines );
         if (!warehouseReply)
-            return IReply.ServerError( warehouseReply.GetMessage() );
-
-        var insertReply = await InsertOrderModels( order, orderGroups, orderLines );
-
+            return IReply.ServerError( warehouseReply.GetMessage() );*/
+        
+        var insertReply = await _repo.InsertOrder( order ); //await InsertOrderModels( order, orderGroups, orderLines );
         if (!insertReply)
             return IReply.ServerError();
         
         string email = OrderingEmailUtility.GenerateOrderPlacedEmail( order );
-        _emailSender.SendHtmlEmail( request.GetContact().Email, "Order Placed", email );
+        _emailSender.SendHtmlEmail( user.Email!, "Order Placed", email );
         return insertReply;
     }
-    static void GenerateOrderModels( string? userId, OrderPlacementRequest request, List<OrderCatalogItem> catalogItems, out Order order, out HashSet<OrderGroup> orderGroups, out Dictionary<OrderGroup, HashSet<OrderLine>> orderLines )
+    static void GenerateOrderModels( string? userId,  OrderPlacementRequest request, List<OrderCatalogItem> catalogItems, out Order order, out HashSet<OrderGroup> orderGroups, out Dictionary<OrderGroup, HashSet<OrderLine>> orderLines )
     {
         order = Order.New( userId, request.GetContact(), request.BillingAddress, request.ShippingAddress );
         orderGroups = [];
@@ -102,8 +103,9 @@ internal sealed class OrderingSystem(
                 userId,
                 DateTime.Now,
                 items );
-
-            var warehouseReply = await _http.TryPostObjRequest<bool>( "", warehouseOrder );
+            
+            // TODO: IMPLEMENT
+            var warehouseReply = true; // await _http.TryPostObjRequest<bool>( "", warehouseOrder );
             if (warehouseReply)
                 continue;
 
@@ -201,4 +203,9 @@ internal sealed class OrderingSystem(
         _emailSender.SendHtmlEmail( orderReply.Data.Contact.Email, "Order Cancelled", email );
         return problemReply;
     }
+
+    readonly record struct CatalogOrderDto(
+        int PosX,
+        int PosY,
+        List<CartItemDto> Items );
 }

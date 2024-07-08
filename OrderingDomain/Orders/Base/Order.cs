@@ -24,7 +24,7 @@ public sealed class Order
         Contact contact,
         Address shippingAddress,
         Address billingAddress ) =>
-        new Order() {
+        new() {
             Id = Guid.NewGuid(),
             UserId = userId,
             Contact = contact,

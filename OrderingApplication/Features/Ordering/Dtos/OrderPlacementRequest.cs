@@ -11,6 +11,6 @@ internal readonly record struct OrderPlacementRequest(
     Address ShippingAddress,
     List<CartItemDto> Items )
 {
-    internal Contact GetContact() =>
-        new Contact( CustomerName, CustomerEmail, CustomerPhone );
+    internal Contact GetContact() => 
+        new( CustomerName, CustomerEmail, CustomerPhone );
 }

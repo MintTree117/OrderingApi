@@ -5,6 +5,7 @@ namespace OrderingDomain.Orders.Base;
 public sealed class OrderGroup
 {
     public Guid Id { get; set; }
+    public Order Order { get; set; } = new();
     public Guid OrderId { get; set; }
     public Guid WarehouseId { get; set; }
     public DateTime LastUpdated { get; set; }

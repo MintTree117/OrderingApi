@@ -10,6 +10,7 @@ public sealed class OrderLine
     }
 
     public Guid Id { get; set; }
+    public OrderGroup OrderGroup { get; set; } = new();
     public Guid OrderId { get; set; }
     public Guid OrderGroupId { get; set; }
     public Guid WarehouseId { get; set; }
