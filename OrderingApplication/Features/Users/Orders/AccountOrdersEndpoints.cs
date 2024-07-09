@@ -6,22 +6,20 @@ namespace OrderingApplication.Features.Users.Orders;
 
 internal static class AccountOrdersEndpoints
 {
-    const int PageSize = 10;
-    
     internal static void MapAccountOrdersEndpoints( this IEndpointRouteBuilder app )
     {
         app.MapGet( "api/account/orders/view",
-            static async ( [FromQuery] int page, HttpContext http, AccountOrdersService service ) =>
-                await ViewPaginatedOrders( page, http, service ) ).RequireAuthorization( Consts.DefaultPolicy );
+            static async ( [FromQuery] int page, [FromQuery] int pageSize, HttpContext http, AccountOrdersService service ) =>
+                await ViewPaginatedOrders( page, pageSize, http, service ) ).RequireAuthorization( Consts.DefaultPolicy );
 
         app.MapPut( "api/account/orders/details",
             static async ( [FromBody] Guid orderId, HttpContext http, AccountOrdersService service ) =>
             await ViewOrderDetails( orderId, http, service ) ).RequireAuthorization( Consts.DefaultPolicy );
     }
 
-    static async Task<IResult> ViewPaginatedOrders( int page, HttpContext http, AccountOrdersService service )
+    static async Task<IResult> ViewPaginatedOrders( int page, int pageSize, HttpContext http, AccountOrdersService service )
     {
-        var reply = await service.ViewPaginatedOrders( http.UserId(), page, PageSize );
+        var reply = await service.ViewPaginatedOrders( http.UserId(), page, pageSize );
         return reply
             ? Results.Ok( reply.Data )
             : Results.Problem( reply.GetMessage() );

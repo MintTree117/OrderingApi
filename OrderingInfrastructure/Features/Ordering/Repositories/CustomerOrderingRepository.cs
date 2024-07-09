@@ -72,6 +72,18 @@ internal sealed class CustomerOrderingRepository( OrderingDbContext database, IL
             return ProcessDbException<Order>( e );
         }
     }
+    public async Task<Reply<int>> CountOrdersForUser( string userId )
+    {
+        try
+        {
+            int count = await _database.OrderGroups.CountAsync();
+            return Reply<int>.Success( count );
+        }
+        catch ( Exception e )
+        {
+            return ProcessDbException<int>( e );
+        }
+    }
     public async Task<Reply<List<Order>>> GetPaginatedOrdersByUserId( string userId, int page, int pageSize )
     {
         try

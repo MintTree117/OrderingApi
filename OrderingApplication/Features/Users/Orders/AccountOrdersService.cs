@@ -12,20 +12,29 @@ internal sealed class AccountOrdersService( UserManager<UserAccount> manager, IC
     readonly UserManager<UserAccount> _manager = manager;
     readonly ICustomerOrderingRepository _repository = repository;
 
-    internal async Task<Reply<List<AccountOrdersViewDto>>> ViewPaginatedOrders( string userId, int page, int pageSize )
+    internal async Task<Reply<AccountOrdersViewDto>> ViewPaginatedOrders( string userId, int page, int pageSize )
     {
         var userReply = await _manager.FindById( userId );
         if (!userReply)
-            return Reply<List<AccountOrdersViewDto>>.UserNotFound();
+            return Reply<AccountOrdersViewDto>.UserNotFound();
 
-        var ordersReply = await _repository.GetPaginatedOrdersByUserId( userId, page, pageSize );
-        if (!ordersReply)
-            return Reply<List<AccountOrdersViewDto>>.Failure( ordersReply.GetMessage() );
+        var countTask = _repository.CountOrdersForUser( userId );
+        var pageTask = _repository.GetPaginatedOrdersByUserId( userId, page, pageSize );
 
-        List<AccountOrdersViewDto> dtos = [];
-        foreach ( var order in ordersReply.Data )
-            dtos.Add( AccountOrdersViewDto.FromModel( order ) );
-        return Reply<List<AccountOrdersViewDto>>.Success( dtos );
+        List<Task> _dbTasks = [countTask, pageTask];
+        await Task.WhenAll( _dbTasks );
+
+        if (!countTask.Result)
+            return Reply<AccountOrdersViewDto>.Failure( countTask.Result.GetMessage() );
+        if (!pageTask.Result)
+            return Reply<AccountOrdersViewDto>.Failure( pageTask.Result.GetMessage() );
+
+        List<AccountOrderViewDto> dtos = [];
+        foreach ( var order in pageTask.Result.Data )
+            dtos.Add( AccountOrderViewDto.FromModel( order ) );
+        
+        AccountOrdersViewDto response = new( countTask.Result.Data, dtos );
+        return Reply<AccountOrdersViewDto>.Success( response );
     }
     internal async Task<Reply<Order>> ViewOrderDetails( string userId, Guid orderId )
     {
