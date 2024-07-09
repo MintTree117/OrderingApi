@@ -6,8 +6,7 @@ namespace OrderingDomain.Orders.Base;
 public sealed class OrderGroup
 {
     public Guid Id { get; set; }
-    [JsonIgnore]
-    public Order Order { get; set; } = new();
+    [JsonIgnore] public Order Order { get; set; } = null!;
     public Guid OrderId { get; set; }
     public Guid WarehouseId { get; set; }
     public DateTime LastUpdated { get; set; }

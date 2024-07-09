@@ -37,13 +37,13 @@ internal static class OrderingEmailUtility
         <div class='order-section'>Email: {order.CustomerEmail}</div>
         <div class='order-section'>Phone: {order.CustomerPhone}</div>
         <div class='order-header'>Shipping Address</div>
-        <div class='order-section'>{order.ShippingAddressName}</div>
-        <div class='order-section'>{order.ShippingPosX}</div>
-        <div class='order-section'>{order.BillingPosY}</div>
+        <div class='order-section'>{order.OrderAddress.BillingAddressName}</div>
+        <div class='order-section'>{order.OrderAddress.BillingPosX}</div>
+        <div class='order-section'>{order.OrderAddress.BillingPosY}</div>
         <div class='order-header'>Billing Address</div>
-        <div class='order-section'>{order.BillingAddressName}</div>
-        <div class='order-section'>{order.BillingPosX}</div>
-        <div class='order-section'>{order.BillingPosY}</div>
+        <div class='order-section'>{order.OrderAddress.ShippingAddressName}</div>
+        <div class='order-section'>{order.OrderAddress.ShippingPosX}</div>
+        <div class='order-section'>{order.OrderAddress.ShippingPosY}</div>
         <div class='order-header'>Order Details</div>
         <table class='order-details'>
         <tr>

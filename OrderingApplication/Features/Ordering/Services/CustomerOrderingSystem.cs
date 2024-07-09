@@ -66,7 +66,7 @@ internal sealed class CustomerOrderingSystem(
     }
     static Order GenerateOrderModel( string? userId, OrderPlacementRequest request, List<OrderCatalogItem> catalogItems )
     {
-        Order order = Order.New( userId, new Contact("h", "h", "h"), request.ShippingAddress, request.BillingAddress );
+        Order order = Order.New( userId, new Contact("h", "h", "h"), request.BillingAddress, request.ShippingAddress );
         HashSet<OrderGroup> orderGroups = [];
         Dictionary<OrderGroup, HashSet<OrderLine>> orderLines = [];
 

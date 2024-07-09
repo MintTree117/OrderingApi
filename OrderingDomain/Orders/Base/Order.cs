@@ -3,19 +3,14 @@ using OrderingDomain.ValueTypes;
 
 namespace OrderingDomain.Orders.Base;
 
-public class Order
+public sealed class Order
 {
     public Guid Id { get; set; } = Guid.Empty;
     public string? UserId { get; set; } = string.Empty;
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerEmail { get; set; } = string.Empty;
     public string? CustomerPhone { get; set; }
-    public string BillingAddressName { get; set; } = string.Empty;
-    public int BillingPosX { get; set; }
-    public int BillingPosY { get; set; }
-    public string ShippingAddressName { get; set; } = string.Empty;
-    public int ShippingPosX { get; set; }
-    public int ShippingPosY { get; set; }
+    public OrderAddress OrderAddress { get; set; } = null!;
     public DateTime DatePlaced { get; set; }
     public DateTime LastUpdate { get; set; }
     public decimal TotalPrice { get; set; }
@@ -28,8 +23,8 @@ public class Order
     public static Order New(
         string? userId,
         Contact contact,
-        Address shippingAddress,
-        Address billingAddress )
+        Address billingAddress,
+        Address shippingAddress )
     {
         Guid id = Guid.NewGuid();
         Order o = new() {
@@ -38,17 +33,11 @@ public class Order
             CustomerName = contact.Name,
             CustomerEmail = contact.Email,
             CustomerPhone = contact.Phone,
-            ShippingAddressName = shippingAddress.Name,
-            ShippingPosX = shippingAddress.PosX,
-            ShippingPosY = shippingAddress.PosY,
-            BillingAddressName = billingAddress.Name,
-            BillingPosX = billingAddress.PosX,
-            BillingPosY = billingAddress.PosY,
+            OrderAddress = OrderAddress.From( id, billingAddress, shippingAddress ),
             DatePlaced = DateTime.Now,
             LastUpdate = DateTime.Now
         };
 
         return o;
     }
-
 }
