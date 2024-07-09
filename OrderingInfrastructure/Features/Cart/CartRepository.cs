@@ -8,7 +8,7 @@ internal sealed class CartRepository( CartDbContext database ) : ICartRepository
 {
     readonly CartDbContext _database = database;
 
-    public async Task<Replies<CartItem>> PostGet( string userId, List<CartItem> itemsFromClient )
+    public async Task<Reply<List<CartItem>>> PostGet( string userId, List<CartItem> itemsFromClient )
     {
         IQueryable<CartItem> items = _database.CartItems; // because of compiler warning "where" ambiguity error with IEnumerable
         var existingCartItems = await items
@@ -34,7 +34,7 @@ internal sealed class CartRepository( CartDbContext database ) : ICartRepository
         }
         
         await _database.SaveChangesAsync();
-        return Replies<CartItem>.Success( existingCartItems );
+        return Reply<List<CartItem>>.Success( existingCartItems );
     }
     public async Task<Reply<bool>> Clear( string userId )
     {

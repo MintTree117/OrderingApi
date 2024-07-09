@@ -23,7 +23,7 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
         // ensure only one primary address
         if (model.IsPrimary)
         {
-            foreach ( UserAddress otherAddress in getReply.Enumerable )
+            foreach ( UserAddress otherAddress in getReply.Data )
                 otherAddress.IsPrimary = false;
             var saveReply = await _repository.SaveAsync();
             LogIfErrorReply( saveReply );
@@ -32,7 +32,7 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
         }
         
         // ensure always a primary address
-        if (!getReply.Enumerable.Any())
+        if (getReply.Data.Count == 0)
             model.IsPrimary = true;
         
         // add
@@ -49,18 +49,18 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
             return IReply.Fail( getReply );
         
         // validate address
-        UserAddress? modelToUpdate = getReply.Enumerable.FirstOrDefault( m => m.Id == address.Id );
+        UserAddress? modelToUpdate = getReply.Data.FirstOrDefault( m => m.Id == address.Id );
         if (modelToUpdate is null)
             return IReply.NotFound( "Address not found." );
 
         // ensure always a primary address
-        var alreadyPrimary = getReply.Enumerable.FirstOrDefault( static a => a.IsPrimary );
+        var alreadyPrimary = getReply.Data.FirstOrDefault( static a => a.IsPrimary );
         if (!address.IsPrimary && alreadyPrimary is null )
             return IReply.Conflict( "There must be a primary address." );
 
         // ensure only one primary address
         if (address.IsPrimary)
-            foreach ( UserAddress otherAddress in getReply.Enumerable )
+            foreach ( UserAddress otherAddress in getReply.Data )
                 otherAddress.IsPrimary = false;
         
         // update model
@@ -94,10 +94,10 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
         // ensure always a primary address
         var getAllReply = await _repository.GetAllByUserId( userId );
         LogIfErrorReply( getAllReply );
-        if (!getAllReply || !getAllReply.Enumerable.Any())
+        if (!getAllReply || getAllReply.Data.Count == 0)
             return IReply.Success(); // its still success if addresses cause error; the error is logged right above if it exists
 
-        var newPrimary = getAllReply.Enumerable.First();
+        var newPrimary = getAllReply.Data.First();
         newPrimary.IsPrimary = true;
 
         var saveReply = await _repository.SaveAsync();

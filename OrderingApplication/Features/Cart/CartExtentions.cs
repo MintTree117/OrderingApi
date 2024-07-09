@@ -5,11 +5,11 @@ namespace OrderingApplication.Features.Cart;
 
 internal static class CartExtentions
 {
-    internal static Replies<CartItemDto> Dtos( this Replies<CartItem> models )
+    internal static Reply<List<CartItemDto>> Dtos( this List<Reply<CartItem>> models )
     {
         List<CartItemDto> dtos = [];
-        dtos.AddRange( from m in models.Enumerable select MapToDto( m ) );
-        return Replies<CartItemDto>.Success( dtos );
+        dtos.AddRange( from m in models select MapToDto( m.Data ) );
+        return Reply<List<CartItemDto>>.Success( dtos );
     }
     internal static List<CartItem> Models( this IEnumerable<CartItemDto> dtos )
     {

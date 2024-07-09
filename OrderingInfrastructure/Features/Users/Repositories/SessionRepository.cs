@@ -10,7 +10,7 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
 {
     readonly UserDbContext _database = database;
 
-    public async Task<Replies<UserSession>> GetSessions( string userId )
+    public async Task<Reply<List<UserSession>>> GetSessions( string userId )
     {
         try
         {
@@ -18,11 +18,11 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
                 await _database.Sessions
                     .Where( s => s.UserId == userId )
                     .ToListAsync();
-            return Replies<UserSession>.Success( result );
+            return Reply<List<UserSession>>.Success( result );
         }
         catch ( Exception e )
         {
-            return ProcessDbExceptionReplies<UserSession>( e );
+            return ProcessDbException<List<UserSession>>( e );
         }
     }
     public async Task<Reply<UserSession>> GetSession( string sessionId, string userId )

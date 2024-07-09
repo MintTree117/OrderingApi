@@ -35,11 +35,11 @@ internal sealed class WarehouseOrderingSystem( IWarehouseOrderingRepository ware
             return IReply.NotFound( "OrderGroup not found." );
 
         string email = orderReply.Data.CustomerEmail;
-        var groupUpdate = await HandleGroupUpdate( email, orderGroupsReply.Enumerable, update.OrderGroupId, update.OrderState );
+        var groupUpdate = await HandleGroupUpdate( email, orderGroupsReply.Data, update.OrderGroupId, update.OrderState );
         if (!groupUpdate)
             return IReply.Fail( groupUpdate.GetMessage() );
 
-        var orderUpdate = await HandleOrderUpdate( email, orderReply.Data, orderGroupsReply.Enumerable, update.OrderState );
+        var orderUpdate = await HandleOrderUpdate( email, orderReply.Data, orderGroupsReply.Data, update.OrderState );
         if (!orderUpdate)
             return IReply.Fail( orderUpdate.GetMessage() );
         

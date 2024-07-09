@@ -115,16 +115,16 @@ internal sealed class CustomerOrderingRepository( OrderingDbContext database, IL
             return ProcessDbException<OrderGroup>( e );
         }
     }
-    public async Task<Replies<OrderGroup>> GetOrderGroupsForOrder( Guid orderId )
+    public async Task<Reply<List<OrderGroup>>> GetOrderGroupsForOrder( Guid orderId )
     {
         try
         {
             var orderGroups = await _database.OrderGroups.Where( o => o.Id == orderId ).ToListAsync();
-            return Replies<OrderGroup>.Success( orderGroups );
+            return Reply<List<OrderGroup>>.Success( orderGroups );
         }
         catch ( Exception e )
         {
-            return ProcessDbExceptionReplies<OrderGroup>( e );
+            return ProcessDbException<List<OrderGroup>>( e );
         }
     }
 }

@@ -46,10 +46,6 @@ internal static class UtilityExtentions
         reply.Succeeded
             ? Results.Ok( reply.Data )
             : FromReply( reply );
-    internal static IResult GetIResult<T>( this Replies<T> reply ) =>
-        reply.Succeeded
-            ? Results.Ok( reply.Enumerable )
-            : FromReply( reply );
     internal static IResult GetIResult( this IReply reply ) =>
         reply.CheckSuccess()
             ? Results.Ok( reply.GetData() )

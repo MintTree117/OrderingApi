@@ -22,17 +22,17 @@ internal sealed class AddressRepository( UserDbContext database, ILogger<Address
             return ProcessDbException<UserAddress>( e );
         }
     }
-    public async Task<Replies<UserAddress>> GetAllByUserId( string userId )
+    public async Task<Reply<List<UserAddress>>> GetAllByUserId( string userId )
     {
         try {
             List<UserAddress> result =
                 await _database.Addresses
                         .Where( a => a.UserId == userId )
                         .ToListAsync();
-            return Replies<UserAddress>.Success( result );
+            return Reply<List<UserAddress>>.Success( result );
         }
         catch ( Exception e ) {
-            return ProcessDbExceptionReplies<UserAddress>( e );
+            return ProcessDbException<List<UserAddress>>( e );
         }
     }
     public async Task<Reply<PagedResult<UserAddress>>> GetAllByUserIdPaged( string userId, int page, int pageSize )

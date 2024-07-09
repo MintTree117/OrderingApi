@@ -13,5 +13,5 @@ public interface ICustomerOrderingRepository : IEfCoreRepository
     Task<Reply<int>> CountOrdersForUser( string userId );
     Task<Reply<List<Order>>> GetPaginatedOrdersByUserId( string userId, int page, int pageSize );
     Task<Reply<OrderGroup>> GetOrderGroupById( Guid orderGroupId );
-    Task<Replies<OrderGroup>> GetOrderGroupsForOrder( Guid orderId );
+    Task<Reply<List<OrderGroup>>> GetOrderGroupsForOrder( Guid orderId );
 }
