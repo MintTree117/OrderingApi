@@ -8,15 +8,15 @@ public class OrderGroupConfiguration : IEntityTypeConfiguration<OrderGroup>
 {
     public void Configure( EntityTypeBuilder<OrderGroup> builder )
     {
-        builder.HasKey( og => og.Id );
-        builder.Property( og => og.OrderId ).IsRequired();
-        builder.Property( og => og.WarehouseId ).IsRequired();
-        builder.Property( og => og.LastUpdated ).IsRequired();
-        builder.Property( og => og.State ).IsRequired();
+        builder.HasKey( static og => og.Id );
+        builder.Property( static og => og.OrderId ).IsRequired();
+        builder.Property( static og => og.WarehouseId ).IsRequired();
+        builder.Property( static og => og.LastUpdated ).IsRequired();
+        builder.Property( static og => og.State ).IsRequired();
 
-        builder.HasMany( og => og.OrderLines )
-            .WithOne( ol => ol.OrderGroup )
-            .HasForeignKey( ol => ol.OrderGroupId )
+        builder.HasMany( static og => og.OrderLines )
+            .WithOne( static ol => ol.OrderGroup )
+            .HasForeignKey( static ol => ol.OrderGroupId )
             .OnDelete( DeleteBehavior.Cascade );
     }
 }

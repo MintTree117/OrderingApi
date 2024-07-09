@@ -16,6 +16,6 @@ public sealed class Invoice
             OrderId = order.Id,
             InvoiceDate = DateTime.Now,
             OrderDate = order.DatePlaced,
-            Pricing = order.Pricing
+            //Pricing = order.Pricing
         };
 }

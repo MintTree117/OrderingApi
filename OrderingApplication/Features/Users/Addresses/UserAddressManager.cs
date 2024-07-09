@@ -66,8 +66,8 @@ internal sealed class UserAddressManager( IAddressRepository addressRepository, 
         // update model
         modelToUpdate.IsPrimary = address.IsPrimary;
         modelToUpdate.Name = address.Name;
-        modelToUpdate.PosX = address.WorldGridPosX;
-        modelToUpdate.PosY = address.WorldGridPosY;
+        modelToUpdate.PosX = address.PosX;
+        modelToUpdate.PosY = address.PosY;
         
         // save
         var saveReply = await _repository.SaveAsync();

@@ -29,7 +29,7 @@ internal static class OrderingEmailUtility
         <body>
         <div class='order-header'>Order Confirmation</div>
         <div class='order-section'>Order ID: {order.Id}</div>
-        <div class='order-section'>Date Placed: {order.DatePlaced:MMMM dd, yyyy}</div>
+        <div class='order-section'>Date Placed: {order.DatePlaced}</div>
         <div class='order-section'>Total Quantity: {order.TotalQuantity}</div>
         <div class='order-section'>Order Status: {order.State}</div>
         <div class='order-header'>Contact Information</div>

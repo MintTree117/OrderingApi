@@ -7,8 +7,8 @@ using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;
 
-internal sealed class OrderingRepository( OrderingDbContext database, ILogger<OrderingRepository> logger ) 
-    : DatabaseService<OrderingRepository>( database, logger ), IOrderingRepository
+internal sealed class CustomerOrderingRepository( OrderingDbContext database, ILogger<CustomerOrderingRepository> logger ) 
+    : DatabaseService<CustomerOrderingRepository>( database, logger ), ICustomerOrderingRepository
 {
     readonly OrderingDbContext _database = database;
 
@@ -17,30 +17,6 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
         try
         {
             await _database.Orders.AddAsync( order );
-            return await SaveAsync();
-        }
-        catch ( Exception e )
-        {
-            return ProcessDbException<bool>( e );
-        }
-    }
-    public async Task<Reply<bool>> InsertOrderGroups( IEnumerable<OrderGroup> orderGroups )
-    {
-        try
-        {
-            await _database.AddRangeAsync( orderGroups );
-            return await SaveAsync();
-        }
-        catch ( Exception e )
-        {
-            return ProcessDbException<bool>( e );
-        }
-    }
-    public async Task<Reply<bool>> InsertOrderLines( IEnumerable<OrderLine> orderLines )
-    {
-        try
-        {
-            await _database.AddRangeAsync( orderLines );
             return await SaveAsync();
         }
         catch ( Exception e )
@@ -94,6 +70,23 @@ internal sealed class OrderingRepository( OrderingDbContext database, ILogger<Or
         catch ( Exception e )
         {
             return ProcessDbException<Order>( e );
+        }
+    }
+    public async Task<Reply<List<Order>>> GetPaginatedOrdersByUserId( string userId, int page, int pageSize )
+    {
+        try
+        {
+            int offset = Math.Max( 0, page - 1 ) * pageSize;
+            var orders = await _database.Orders
+                .Where( o => o.UserId == userId )
+                .OrderBy( static o => o.DatePlaced )
+                .Skip( offset ).Take( pageSize )
+                .ToListAsync();
+            return Reply<List<Order>>.Success( orders );
+        }
+        catch ( Exception e )
+        {
+            return ProcessDbException<List<Order>>( e );
         }
     }
     public async Task<Reply<OrderGroup>> GetOrderGroupById( Guid orderGroupId )

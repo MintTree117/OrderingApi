@@ -1,7 +1,6 @@
 namespace OrderingDomain.ValueTypes;
 
 public readonly record struct Pricing(
-    string PromoCode,
     decimal Subtotal,
     decimal ItemDiscount,
     decimal Tax,

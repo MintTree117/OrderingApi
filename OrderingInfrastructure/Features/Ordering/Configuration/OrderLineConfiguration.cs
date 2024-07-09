@@ -8,14 +8,14 @@ public class OrderLineConfiguration : IEntityTypeConfiguration<OrderLine>
 {
     public void Configure( EntityTypeBuilder<OrderLine> builder )
     {
-        builder.HasKey( ol => ol.Id );
-        builder.Property( ol => ol.OrderId ).IsRequired();
-        builder.Property( ol => ol.OrderGroupId ).IsRequired();
-        builder.Property( ol => ol.WarehouseId ).IsRequired();
-        builder.Property( ol => ol.UnitId ).IsRequired();
-        builder.Property( ol => ol.UnitPrice ).IsRequired().HasColumnType( "decimal(18,2)" );
-        builder.Property( ol => ol.Discount ).IsRequired().HasColumnType( "decimal(18,2)" );
-        builder.Property( ol => ol.Tax ).IsRequired().HasColumnType( "decimal(18,2)" );
-        builder.Property( ol => ol.Quantity ).IsRequired();
+        builder.HasKey( static ol => ol.Id );
+        builder.Property( static ol => ol.OrderId ).IsRequired();
+        builder.Property( static ol => ol.OrderGroupId ).IsRequired();
+        builder.Property( static ol => ol.WarehouseId ).IsRequired();
+        builder.Property( static ol => ol.UnitId ).IsRequired();
+        builder.Property( static ol => ol.UnitPrice ).IsRequired().HasColumnType( "decimal(18,2)" );
+        builder.Property( static ol => ol.Discount ).IsRequired().HasColumnType( "decimal(18,2)" );
+        builder.Property( static ol => ol.Tax ).IsRequired().HasColumnType( "decimal(18,2)" );
+        builder.Property( static ol => ol.Quantity ).IsRequired();
     }
 }

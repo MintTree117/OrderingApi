@@ -4,13 +4,8 @@ using OrderingDomain.ValueTypes;
 namespace OrderingApplication.Features.Ordering.Dtos;
 
 internal readonly record struct OrderPlacementRequest(
-    string CustomerName,
-    string CustomerEmail,
-    string? CustomerPhone,
+    Contact Contact,
     Address BillingAddress,
     Address ShippingAddress,
-    List<CartItemDto> Items )
-{
-    internal Contact GetContact() => 
-        new( CustomerName, CustomerEmail, CustomerPhone );
-}
+    string? EncodedPaymentInfo,
+    List<CartItemDto> Items );

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using OrderingDomain.Orders.Meta;
 
 namespace OrderingDomain.Orders.Base;
@@ -5,6 +6,7 @@ namespace OrderingDomain.Orders.Base;
 public sealed class OrderGroup
 {
     public Guid Id { get; set; }
+    [JsonIgnore]
     public Order Order { get; set; } = new();
     public Guid OrderId { get; set; }
     public Guid WarehouseId { get; set; }

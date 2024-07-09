@@ -12,7 +12,8 @@ public sealed class Order
     public Address ShippingAddress { get; set; }
     public DateTime DatePlaced { get; set; }
     public DateTime LastUpdate { get; set; }
-    public Pricing Pricing { get; set; }
+    //public Pricing Pricing { get; set; }
+    public decimal TotalPrice { get; set; }
     public int TotalQuantity { get; set; }
     public bool Delayed { get; set; }
     public bool Problem { get; set; }

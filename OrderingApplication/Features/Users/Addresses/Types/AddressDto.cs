@@ -6,8 +6,8 @@ internal readonly record struct AddressDto(
     Guid Id,
     bool IsPrimary,
     string Name,
-    int WorldGridPosX,
-    int WorldGridPosY )
+    int PosX,
+    int PosY )
 {
     internal static IEnumerable<AddressDto> FromModels( IEnumerable<UserAddress> models )
     {
@@ -18,5 +18,5 @@ internal readonly record struct AddressDto(
     internal static AddressDto FromModel( UserAddress model ) =>
         new( model.Id, model.IsPrimary, model.Name, model.PosX, model.PosY );
     internal UserAddress ToModel( string identityId ) =>
-        new( Id, identityId, IsPrimary, Name, WorldGridPosX, WorldGridPosY );
+        new( Id, identityId, IsPrimary, Name, PosX, PosY );
 }

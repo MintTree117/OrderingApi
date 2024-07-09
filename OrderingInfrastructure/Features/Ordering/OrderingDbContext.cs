@@ -22,4 +22,5 @@ internal sealed class OrderingDbContext( DbContextOptions<OrderingDbContext> opt
     public required DbSet<OrderLine> OrderLines { get; init; }
     public required DbSet<OrderProblem> OrderProblems { get; init; }
     public required DbSet<Warehouse> WarehouseLocations { get; init; }
+    public required DbSet<WarehouseOrderGroup> WarehouseOrderGroups { get; init; }
 }

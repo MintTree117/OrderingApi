@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace OrderingDomain.Orders.Base;
 
 public sealed class OrderLine
@@ -10,6 +12,7 @@ public sealed class OrderLine
     }
 
     public Guid Id { get; set; }
+    [JsonIgnore]
     public OrderGroup OrderGroup { get; set; } = new();
     public Guid OrderId { get; set; }
     public Guid OrderGroupId { get; set; }
