@@ -1,6 +1,5 @@
 using OrderingApplication.Features.Ordering.Dtos;
-using OrderingDomain.Orders.Base;
-using OrderingDomain.Orders.Meta;
+using OrderingDomain.Orders;
 using OrderingDomain.ReplyTypes;
 using OrderingInfrastructure.Email;
 using OrderingInfrastructure.Features.Ordering.Repositories;

@@ -1,6 +1,5 @@
 using System.Text;
-using OrderingDomain.Orders.Base;
-using OrderingDomain.Orders.Meta;
+using OrderingDomain.Orders;
 
 namespace OrderingApplication.Features.Ordering.Services;
 

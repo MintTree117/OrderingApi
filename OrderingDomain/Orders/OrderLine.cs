@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace OrderingDomain.Orders.Base;
+namespace OrderingDomain.Orders;
 
 public sealed class OrderLine
 {

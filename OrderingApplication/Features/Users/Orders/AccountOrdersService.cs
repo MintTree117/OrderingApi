@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using OrderingApplication.Features.Users.Utilities;
-using OrderingDomain.Orders.Base;
+using OrderingDomain.Orders;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
 using OrderingInfrastructure.Features.Ordering.Repositories;

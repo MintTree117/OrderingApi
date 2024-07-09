@@ -1,4 +1,4 @@
-using OrderingDomain.Orders.Meta;
+using OrderingDomain.Orders;
 
 namespace OrderingApplication.Features.Ordering.Dtos;
 

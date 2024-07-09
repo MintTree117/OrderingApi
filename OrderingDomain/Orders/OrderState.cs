@@ -1,4 +1,4 @@
-namespace OrderingDomain.Orders.Meta;
+namespace OrderingDomain.Orders;
 
 public enum OrderState
 {

@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using OrderingDomain.Orders.Base;
+using OrderingDomain.Orders;
 using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;

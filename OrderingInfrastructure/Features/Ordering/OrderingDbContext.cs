@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using OrderingDomain.Orders.Base;
-using OrderingDomain.Orders.Meta;
+using OrderingDomain.Orders;
+
 namespace OrderingInfrastructure.Features.Ordering;
 
 internal sealed class OrderingDbContext( DbContextOptions<OrderingDbContext> options ) 

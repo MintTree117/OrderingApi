@@ -1,4 +1,4 @@
-namespace OrderingDomain.Orders.Base;
+namespace OrderingDomain.Orders;
 
 public sealed class WarehouseOrderGroup
 {

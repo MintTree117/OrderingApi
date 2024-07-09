@@ -1,7 +1,6 @@
-using OrderingDomain.Orders.Meta;
 using OrderingDomain.ValueTypes;
 
-namespace OrderingDomain.Orders.Base;
+namespace OrderingDomain.Orders;
 
 public sealed class Order
 {

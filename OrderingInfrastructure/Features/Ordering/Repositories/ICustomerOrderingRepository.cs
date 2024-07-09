@@ -1,5 +1,4 @@
-using OrderingDomain.Orders.Base;
-using OrderingDomain.Orders.Meta;
+using OrderingDomain.Orders;
 using OrderingDomain.ReplyTypes;
 
 namespace OrderingInfrastructure.Features.Ordering.Repositories;

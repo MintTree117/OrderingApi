@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
-using OrderingDomain.Orders.Meta;
 
-namespace OrderingDomain.Orders.Base;
+namespace OrderingDomain.Orders;
 
 public sealed class OrderGroup
 {

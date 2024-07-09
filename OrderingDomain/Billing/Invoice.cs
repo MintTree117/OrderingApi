@@ -1,4 +1,4 @@
-using OrderingDomain.Orders.Base;
+using OrderingDomain.Orders;
 using OrderingDomain.ValueTypes;
 
 namespace OrderingDomain.Billing;

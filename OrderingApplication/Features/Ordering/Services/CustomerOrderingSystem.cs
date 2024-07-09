@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using OrderingApplication.Features.Cart;
 using OrderingApplication.Features.Ordering.Dtos;
-using OrderingDomain.Orders.Base;
-using OrderingDomain.Orders.Meta;
+using OrderingDomain.Orders;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
 using OrderingDomain.ValueTypes;
