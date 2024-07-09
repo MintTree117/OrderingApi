@@ -11,14 +11,10 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasKey( static o => o.Id );
         builder.Property( static o => o.UserId ).IsRequired().HasMaxLength( 450 );
         //builder.ComplexProperty( o => o.Contact );
-        builder.ComplexProperty( static o => o.BillingAddress );
-        builder.ComplexProperty( static o => o.ShippingAddress );
         //builder.ComplexProperty( o => o.Pricing );
         builder.Property( static o => o.DatePlaced ).IsRequired();
         builder.Property( static o => o.LastUpdate ).IsRequired();
         builder.Property( static o => o.TotalQuantity ).IsRequired();
-        builder.Property( static o => o.Delayed ).IsRequired();
-        builder.Property( static o => o.Problem ).IsRequired();
         builder.Property( static o => o.State ).IsRequired();
 
         builder.HasMany( static o => o.OrderGroups )

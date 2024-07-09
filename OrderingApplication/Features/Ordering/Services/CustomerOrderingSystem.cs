@@ -5,6 +5,7 @@ using OrderingDomain.Orders.Base;
 using OrderingDomain.Orders.Meta;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
+using OrderingDomain.ValueTypes;
 using OrderingInfrastructure.Email;
 using OrderingInfrastructure.Features.Ordering.Repositories;
 using OrderingInfrastructure.Http;
@@ -60,12 +61,12 @@ internal sealed class CustomerOrderingSystem(
             return dbReply;
         
         string body = OrderingEmailUtility.GenerateOrderPlacedEmail( order );
-        _emailSender.SendHtmlEmail( request.Contact.Email, "Order Placed", body );
+        _emailSender.SendHtmlEmail( "martygrof3708@gmail.com", "Order Placed", body );
         return dbReply;
     }
     static Order GenerateOrderModel( string? userId, OrderPlacementRequest request, List<OrderCatalogItem> catalogItems )
     {
-        Order order = Order.New( userId, request.Contact, request.BillingAddress, request.ShippingAddress );
+        Order order = Order.New( userId, new Contact("h", "h", "h"), request.ShippingAddress, request.BillingAddress );
         HashSet<OrderGroup> orderGroups = [];
         Dictionary<OrderGroup, HashSet<OrderLine>> orderLines = [];
 
@@ -135,7 +136,7 @@ internal sealed class CustomerOrderingSystem(
         };
         var problemReply = await _customerRepository.InsertOrderProblem( problem );
         string email = OrderingEmailUtility.GenerateOrderCancelledEmail( orderReply.Data, request.Message );
-        _emailSender.SendHtmlEmail( orderReply.Data.Contact.Email, "Order Cancelled", email );
+        _emailSender.SendHtmlEmail( orderReply.Data.CustomerEmail, "Order Cancelled", email );
         return problemReply;
     }
 

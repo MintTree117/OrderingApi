@@ -1,6 +1,7 @@
 using OrderingApplication.Features.Users.Addresses;
 using OrderingApplication.Features.Users.Authentication.Services;
 using OrderingApplication.Features.Users.Delete;
+using OrderingApplication.Features.Users.Orders;
 using OrderingApplication.Features.Users.Profile;
 using OrderingApplication.Features.Users.Registration.Systems;
 using OrderingApplication.Features.Users.Security;
@@ -23,5 +24,6 @@ internal static class UserConfiguration
         builder.Services.AddScoped<AccountConfirmationSystem>();
         builder.Services.AddScoped<AccountRegistrationSystem>();
         builder.Services.AddScoped<AccountSecurityManager>();
+        builder.Services.AddScoped<AccountOrdersService>();
     }
 }

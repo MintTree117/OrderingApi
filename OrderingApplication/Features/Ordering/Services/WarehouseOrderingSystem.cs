@@ -34,7 +34,7 @@ internal sealed class WarehouseOrderingSystem( IWarehouseOrderingRepository ware
         if (!orderGroupsReply)
             return IReply.NotFound( "OrderGroup not found." );
 
-        string email = orderReply.Data.Contact.Email;
+        string email = orderReply.Data.CustomerEmail;
         var groupUpdate = await HandleGroupUpdate( email, orderGroupsReply.Enumerable, update.OrderGroupId, update.OrderState );
         if (!groupUpdate)
             return IReply.Fail( groupUpdate.GetMessage() );

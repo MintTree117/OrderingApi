@@ -76,7 +76,7 @@ internal sealed class CustomerOrderingRepository( OrderingDbContext database, IL
     {
         try
         {
-            int count = await _database.OrderGroups.CountAsync();
+            int count = await _database.Orders.CountAsync( g => g.UserId == userId );
             return Reply<int>.Success( count );
         }
         catch ( Exception e )

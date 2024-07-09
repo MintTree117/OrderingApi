@@ -33,17 +33,17 @@ internal static class OrderingEmailUtility
         <div class='order-section'>Total Quantity: {order.TotalQuantity}</div>
         <div class='order-section'>Order Status: {order.State}</div>
         <div class='order-header'>Contact Information</div>
-        <div class='order-section'>Name: {order.Contact.Name}</div>
-        <div class='order-section'>Email: {order.Contact.Email}</div>
-        <div class='order-section'>Phone: {order.Contact.Phone}</div>
+        <div class='order-section'>Name: {order.CustomerName}</div>
+        <div class='order-section'>Email: {order.CustomerEmail}</div>
+        <div class='order-section'>Phone: {order.CustomerPhone}</div>
         <div class='order-header'>Shipping Address</div>
-        <div class='order-section'>{order.ShippingAddress.Name}</div>
-        <div class='order-section'>{order.ShippingAddress.PosX}</div>
-        <div class='order-section'>{order.ShippingAddress.PosY}</div>
+        <div class='order-section'>{order.ShippingAddressName}</div>
+        <div class='order-section'>{order.ShippingPosX}</div>
+        <div class='order-section'>{order.BillingPosY}</div>
         <div class='order-header'>Billing Address</div>
-        <div class='order-section'>{order.BillingAddress.Name}</div>
-        <div class='order-section'>{order.BillingAddress.PosX}</div>
-        <div class='order-section'>{order.BillingAddress.PosY}</div>
+        <div class='order-section'>{order.BillingAddressName}</div>
+        <div class='order-section'>{order.BillingPosX}</div>
+        <div class='order-section'>{order.BillingPosY}</div>
         <div class='order-header'>Order Details</div>
         <table class='order-details'>
         <tr>
@@ -179,7 +179,7 @@ internal static class OrderingEmailUtility
             <div class='order-section'>Order ID: " + order.Id + @"</div>
             <div class='order-section'>New Order Status: " + newState + @"</div>
             <div class='order-section'>Date: " + DateTime.Now.ToString( "MMMM dd, yyyy" ) + @"</div>
-            <p>Dear " + order.Contact.Name + @",</p>
+            <p>Dear " + order.CustomerName + @",</p>
             <p>We wanted to inform you that the status of your order has changed to <strong>" + newState + @"</strong>. Please find the updated details below:</p>
             <p>If you have any questions or need further assistance, feel free to contact us at support@example.com.</p>
             <p>Thank you for shopping with us!</p>
@@ -204,7 +204,7 @@ internal static class OrderingEmailUtility
             <div class='order-section'>Cancellation Reason:</div>
             <p>" + cancellationReason + @"</p>
             <div class='order-section'>Date: " + DateTime.Now.ToString( "MMMM dd, yyyy" ) + @"</div>
-            <p>Dear " + order.Contact.Name + @",</p>
+            <p>Dear " + order.CustomerName + @",</p>
             <p>We regret to inform you that your order has been cancelled. The details are as follows:</p>
             <p>If you have any questions or need further assistance, feel free to contact us at support@example.com.</p>
             <p>Thank you for your understanding.</p>
