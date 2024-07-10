@@ -10,18 +10,35 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
 {
     readonly UserDbContext _database = database;
 
-    public async Task<Reply<List<UserSession>>> GetSessions( string userId )
+    public async Task<Reply<int>> CountUserSessions( string userId )
     {
         try
         {
+            int count = await _database.Sessions.CountAsync( s => s.UserId == userId );
+            return Reply<int>.Success( count );
+        }
+        catch ( Exception e )
+        {
+            logger.LogError( e, e.Message );
+            return ProcessDbException<int>( e );
+        }
+    }
+    public async Task<Reply<List<UserSession>>> GetPaginatedUserSessions( string userId, int page, int pageSize )
+    {
+        try
+        {
+            int offset = Math.Max( 0, page ) * pageSize;
             List<UserSession> result =
                 await _database.Sessions
                     .Where( s => s.UserId == userId )
+                    .Skip( offset )
+                    .Take( pageSize )
                     .ToListAsync();
             return Reply<List<UserSession>>.Success( result );
         }
         catch ( Exception e )
         {
+            logger.LogError( e, e.Message );
             return ProcessDbException<List<UserSession>>( e );
         }
     }

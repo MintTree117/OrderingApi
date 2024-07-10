@@ -5,6 +5,7 @@ using OrderingApplication.Features.Users.Authentication;
 using OrderingApplication.Features.Users.Orders;
 using OrderingApplication.Features.Users.Registration;
 using OrderingApplication.Features.Users.Security;
+using OrderingApplication.Features.Users.Sessions;
 
 namespace OrderingApplication.Features.Users;
 
@@ -19,5 +20,6 @@ internal static class UserEndpoints
         app.MapAccountAddressEndpoints();
         app.MapAccountDeleteEndpoints();
         app.MapAccountOrdersEndpoints();
+        app.MapAccountSessionsEndpoints();
     }
 }
