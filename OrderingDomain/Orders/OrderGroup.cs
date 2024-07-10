@@ -17,4 +17,9 @@ public sealed class OrderGroup
         State = state;
         LastUpdated = DateTime.Now;
     }
+
+    public decimal GetSubtotal() =>
+        OrderLines.Sum( static o => o.UnitPrice );
+    public decimal GetShippingCost() =>
+        OrderLines.Sum( static o => o.ShippingCost );
 }

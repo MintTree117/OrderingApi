@@ -4,7 +4,6 @@ using OrderingApplication.Features.Ordering.Dtos;
 using OrderingDomain.Orders;
 using OrderingDomain.ReplyTypes;
 using OrderingDomain.Users;
-using OrderingDomain.ValueTypes;
 using OrderingInfrastructure.Email;
 using OrderingInfrastructure.Features.Ordering.Repositories;
 using OrderingInfrastructure.Http;
@@ -65,7 +64,7 @@ internal sealed class CustomerOrderingSystem(
     }
     static Order GenerateOrderModel( string? userId, OrderPlacementRequest request, List<OrderCatalogItem> catalogItems )
     {
-        Order order = Order.New( userId, new Contact("h", "h", "h"), request.BillingAddress, request.ShippingAddress );
+        Order order = Order.New( userId, request.Contact, request.BillingAddress, request.ShippingAddress );
         HashSet<OrderGroup> orderGroups = [];
         Dictionary<OrderGroup, HashSet<OrderLine>> orderLines = [];
 
@@ -80,15 +79,16 @@ internal sealed class CustomerOrderingSystem(
                     LastUpdated = DateTime.Now,
                 };
 
-            OrderLine line = new OrderLine() {
+            OrderLine line = new() {
                 Id = Guid.NewGuid(),
                 OrderId = order.Id,
                 OrderGroupId = group.Id,
                 WarehouseId = item.WarehouseId,
                 UnitId = item.ProductId,
+                UnitName = item.UnitName,
                 UnitPrice = item.UnitPrice,
-                Discount = item.Discount,
-                Tax = item.Tax,
+                UnitDiscount = item.UnitDiscount,
+                ShippingCost = item.ShippingCost,
                 Quantity = item.Quantity
             };
 
@@ -100,7 +100,9 @@ internal sealed class CustomerOrderingSystem(
         foreach ( var kvp in orderLines )
             kvp.Key.OrderLines = kvp.Value.ToList();
         order.OrderGroups = orderGroups.ToList();
-
+        
+        // TODO: Find a better place/way for this
+        order.CalculatePricing();
         return order;
     }
     async Task<Reply<bool>> InsertNewOrder( Order order )

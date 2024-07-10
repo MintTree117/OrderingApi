@@ -9,9 +9,13 @@ public sealed class Order
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerEmail { get; set; } = string.Empty;
     public string? CustomerPhone { get; set; }
-    public OrderAddress OrderAddress { get; set; } = null!;
+    public OrderAddress OrderAddress { get; set; } = null!; // ef core navigation property
     public DateTime DatePlaced { get; set; }
     public DateTime LastUpdate { get; set; }
+    public decimal SubTotal { get; set; }
+    public decimal ShippingCost { get; set; }
+    public decimal TotalDiscount { get; set; }
+    public decimal TaxAmount { get; set; }
     public decimal TotalPrice { get; set; }
     public int TotalQuantity { get; set; }
     public bool Delayed { get; set; }
@@ -38,5 +42,26 @@ public sealed class Order
         };
 
         return o;
+    }
+
+    public void CalculatePricing()
+    {
+        decimal subtotal = decimal.Zero;
+        decimal shipping = decimal.Zero;
+        decimal discount = decimal.Zero;
+        
+        foreach ( OrderGroup g in OrderGroups )
+        {
+            subtotal += g.GetSubtotal();
+            shipping += g.GetShippingCost();
+            discount += 0;
+        }
+        
+        SubTotal = subtotal;
+        ShippingCost = shipping;
+        TotalDiscount = discount;
+        // TODO: Handle tax percentages more gracefully
+        TaxAmount = (subtotal + shipping) * (decimal) 0.13;
+        TotalPrice = (SubTotal - TotalDiscount) + ShippingCost + TaxAmount;
     }
 }

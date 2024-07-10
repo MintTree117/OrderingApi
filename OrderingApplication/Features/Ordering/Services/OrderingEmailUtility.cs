@@ -83,8 +83,7 @@ internal static class OrderingEmailUtility
                 <td>{line.UnitId}</td>
                 <td>{line.UnitPrice:C}</td>
                 <td>{line.Quantity}</td>
-                <td>{line.Discount:C}</td>
-                <td>{line.Tax:C}</td>
+                <td>{line.UnitDiscount:C}</td>
                 </tr>
                 """);
             }
@@ -147,8 +146,7 @@ internal static class OrderingEmailUtility
                                    <td>{line.UnitId}</td>
                                    <td>{line.UnitPrice:C}</td>
                                    <td>{line.Quantity}</td>
-                                   <td>{line.Discount:C}</td>
-                                   <td>{line.Tax:C}</td>
+                                   <td>{line.UnitDiscount:C}</td>
                                    </tr>
                                    """ );
         }

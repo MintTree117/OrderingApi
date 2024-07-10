@@ -11,9 +11,9 @@ internal sealed class OrderingDbContext( DbContextOptions<OrderingDbContext> opt
         // Order configuration
         modelBuilder.Entity<Order>( static entity => {
             entity.HasKey( static o => o.Id );
-            
             entity.Property( static o => o.UserId )
                 .HasMaxLength( 50 );
+            
             entity.Property( static o => o.CustomerName )
                 .IsRequired()
                 .HasMaxLength( 100 );
@@ -22,15 +22,31 @@ internal sealed class OrderingDbContext( DbContextOptions<OrderingDbContext> opt
                 .HasMaxLength( 100 );
             entity.Property( static o => o.CustomerPhone )
                 .HasMaxLength( 15 );
+            
             entity.Property( static o => o.DatePlaced )
                 .IsRequired();
             entity.Property( static o => o.LastUpdate )
                 .IsRequired();
+
+            entity.Property( static o => o.SubTotal )
+                .IsRequired()
+                .HasColumnType( "decimal(18,2)" );
+            entity.Property( static o => o.ShippingCost )
+                .IsRequired()
+                .HasColumnType( "decimal(18,2)" );
+            entity.Property( static o => o.TotalDiscount )
+                .IsRequired()
+                .HasColumnType( "decimal(18,2)" );
+            entity.Property( static o => o.TaxAmount )
+                .IsRequired()
+                .HasColumnType( "decimal(18,2)" );
             entity.Property( static o => o.TotalPrice )
                 .IsRequired()
                 .HasColumnType( "decimal(18,2)" );
+            
             entity.Property( static o => o.TotalQuantity )
                 .IsRequired();
+            
             entity.Property( static o => o.Delayed )
                 .IsRequired();
             entity.Property( static o => o.Problem )
@@ -41,12 +57,20 @@ internal sealed class OrderingDbContext( DbContextOptions<OrderingDbContext> opt
             // Configuring owned entity
             entity.OwnsOne( static o => o.OrderAddress, static oa => {
                 oa.WithOwner().HasForeignKey( static oa => oa.OrderId );
-                oa.Property( static a => a.BillingAddressName ).IsRequired().HasMaxLength( 100 );
-                oa.Property( static a => a.BillingPosX ).IsRequired();
-                oa.Property( static a => a.BillingPosY ).IsRequired();
-                oa.Property( static a => a.ShippingAddressName ).IsRequired().HasMaxLength( 100 );
-                oa.Property( static a => a.ShippingPosX ).IsRequired();
-                oa.Property( static a => a.ShippingPosY ).IsRequired();
+                oa.Property( static a => a.BillingAddressName )
+                    .IsRequired()
+                    .HasMaxLength( 100 );
+                oa.Property( static a => a.BillingPosX )
+                    .IsRequired();
+                oa.Property( static a => a.BillingPosY )
+                    .IsRequired();
+                oa.Property( static a => a.ShippingAddressName )
+                    .IsRequired()
+                    .HasMaxLength( 100 );
+                oa.Property( static a => a.ShippingPosX )
+                    .IsRequired();
+                oa.Property( static a => a.ShippingPosY )
+                    .IsRequired();
                 oa.HasKey( static a => a.Id );
             } );
 
@@ -71,13 +95,13 @@ internal sealed class OrderingDbContext( DbContextOptions<OrderingDbContext> opt
         // OrderLine configuration
         modelBuilder.Entity<OrderLine>( static entity => {
             entity.HasKey( static ol => ol.Id );
+            entity.Property( static a => a.UnitName )
+                .IsRequired()
+                .HasMaxLength( 100 );
             entity.Property( static ol => ol.UnitPrice )
                 .IsRequired()
                 .HasColumnType( "decimal(18,2)" );
-            entity.Property( static ol => ol.Discount )
-                .IsRequired()
-                .HasColumnType( "decimal(18,2)" );
-            entity.Property( static ol => ol.Tax )
+            entity.Property( static ol => ol.UnitDiscount )
                 .IsRequired()
                 .HasColumnType( "decimal(18,2)" );
             entity.Property( static ol => ol.Quantity )

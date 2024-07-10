@@ -3,7 +3,8 @@ namespace OrderingApplication.Features.Ordering.Dtos;
 internal readonly record struct OrderCatalogItem(
     Guid ProductId,
     Guid WarehouseId,
+    string UnitName,
     decimal UnitPrice,
-    decimal Discount,
-    decimal Tax,
+    decimal UnitDiscount,
+    decimal ShippingCost,
     int Quantity );
