@@ -21,7 +21,8 @@ internal sealed class GlobalExceptionHandlerMiddleware( RequestDelegate next )
 
     static Task HandleExceptionAsync( HttpContext context, Exception exception )
     {
-        EndpointLogger.LogException( exception, "An unhandled exception has occurred, caught by custom middleware." );
+        EndpointLogger.LogException( exception, 
+            "An unhandled exception has occurred, caught by custom middleware." );
 
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;

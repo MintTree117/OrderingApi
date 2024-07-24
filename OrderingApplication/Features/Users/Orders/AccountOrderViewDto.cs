@@ -5,7 +5,7 @@ namespace OrderingApplication.Features.Users.Orders;
 public readonly record struct AccountOrderViewDto(
     Guid OrderId,
     DateTime OrderDate,
-    OrderState State,
+    OrderStatus Status,
     int TotalQuantity,
     decimal TotalPrice )
 {

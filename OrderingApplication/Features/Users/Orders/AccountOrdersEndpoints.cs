@@ -12,8 +12,8 @@ internal static class AccountOrdersEndpoints
             static async ( [FromQuery] int page, [FromQuery] int pageSize, HttpContext http, AccountOrdersService service ) =>
                 await ViewPaginatedOrders( page, pageSize, http, service ) ).RequireAuthorization( Consts.DefaultPolicy );
 
-        app.MapPut( "api/account/orders/details",
-            static async ( [FromBody] Guid orderId, HttpContext http, AccountOrdersService service ) =>
+        app.MapGet( "api/account/orders/details",
+            static async ( [FromQuery] Guid orderId, HttpContext http, AccountOrdersService service ) =>
             await ViewOrderDetails( orderId, http, service ) ).RequireAuthorization( Consts.DefaultPolicy );
     }
 

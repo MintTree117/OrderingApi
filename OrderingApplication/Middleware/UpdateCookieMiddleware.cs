@@ -1,6 +1,6 @@
 namespace OrderingApplication.Middleware;
 
-public class UpdateCookieMiddleware( RequestDelegate next )
+public sealed class UpdateCookieMiddleware( RequestDelegate next )
 {
     readonly RequestDelegate _next = next;
 

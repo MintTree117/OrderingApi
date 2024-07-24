@@ -1,10 +1,10 @@
 namespace OrderingDomain.Orders;
 
-public enum OrderState
+public enum OrderStatus
 {
-    Placed,
+    Pending,
     Fulfilling,
     Shipping,
-    Delivered,
-    Cancelled
+    Complete,
+    Returned
 }

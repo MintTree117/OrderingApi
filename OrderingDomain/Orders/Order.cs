@@ -20,7 +20,7 @@ public sealed class Order
     public int TotalQuantity { get; set; }
     public bool Delayed { get; set; }
     public bool Problem { get; set; }
-    public OrderState State { get; set; } = OrderState.Placed;
+    public OrderStatus State { get; set; }
     public List<OrderGroup> OrderGroups { get; set; } = [];
 
     public static Order New(
@@ -63,5 +63,10 @@ public sealed class Order
         // TODO: Handle tax percentages more gracefully
         TaxAmount = (subtotal + shipping) * (decimal) 0.13;
         TotalPrice = (SubTotal - TotalDiscount) + ShippingCost + TaxAmount;
+    }
+    public void CalculateQuantity()
+    {
+        int total = OrderGroups.Sum( static group => group.OrderLines.Sum( static l => l.Quantity ) );
+        TotalQuantity = total;
     }
 }

@@ -48,7 +48,7 @@ internal sealed class CustomerOrderingSystem(
         CatalogOrderDto catalogDto = new(
             request.ShippingAddress.PosX, request.ShippingAddress.PosY, request.Items );
         
-        var catalogReply = await _http.TryPostObjRequest<List<OrderCatalogItem>>( _checkCatalogUrl, catalogDto );
+        var catalogReply = await _http.TryPost<List<OrderCatalogItem>>( _checkCatalogUrl, catalogDto );
         if (!catalogReply)
             return IReply.ServerError( catalogReply.GetMessage() );
 
@@ -59,7 +59,7 @@ internal sealed class CustomerOrderingSystem(
             return dbReply;
         
         string body = OrderingEmailUtility.GenerateOrderPlacedEmail( order );
-        _emailSender.SendHtmlEmail( "martygrof3708@gmail.com", "Order Placed", body );
+        _emailSender.SendHtmlEmail( order.CustomerEmail, "Order Placed", body );
         return dbReply;
     }
     static Order GenerateOrderModel( string? userId, OrderPlacementRequest request, List<OrderCatalogItem> catalogItems )
@@ -103,6 +103,7 @@ internal sealed class CustomerOrderingSystem(
         
         // TODO: Find a better place/way for this
         order.CalculatePricing();
+        order.CalculateQuantity();
         return order;
     }
     async Task<Reply<bool>> InsertNewOrder( Order order )

@@ -13,7 +13,7 @@ internal sealed class HttpService( IConfiguration configuration, ILogger<HttpSer
     readonly HttpClient _http = GetHttpClient( configuration );
     readonly ILogger<HttpService> _logger = logger;
 
-    public async Task<Reply<T>> TryGetObjRequest<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null )
+    public async Task<Reply<T>> TryGet<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null )
     {
         try {
             SetAuthHttpHeader( authToken );
@@ -25,7 +25,7 @@ internal sealed class HttpService( IConfiguration configuration, ILogger<HttpSer
             return HandleHttpObjException<T>( e, apiPath );
         }
     }
-    public async Task<Reply<T>> TryPostObjRequest<T>( string apiPath, object? body = null, string? authToken = null )
+    public async Task<Reply<T>> TryPost<T>( string apiPath, object? body = null, string? authToken = null )
     {
         try {
             SetAuthHttpHeader( authToken );
@@ -36,7 +36,7 @@ internal sealed class HttpService( IConfiguration configuration, ILogger<HttpSer
             return HandleHttpObjException<T>( e, apiPath );
         }
     }
-    public async Task<Reply<T>> TryPutObjRequest<T>( string apiPath, object? body = null, string? authToken = null )
+    public async Task<Reply<T>> TryPut<T>( string apiPath, object? body = null, string? authToken = null )
     {
         try {
             SetAuthHttpHeader( authToken );
@@ -47,7 +47,7 @@ internal sealed class HttpService( IConfiguration configuration, ILogger<HttpSer
             return HandleHttpObjException<T>( e, apiPath );
         }
     }
-    public async Task<Reply<T>> TryDeleteObjRequest<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null )
+    public async Task<Reply<T>> TryDelete<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null )
     {
         try {
             SetAuthHttpHeader( authToken );

@@ -9,12 +9,12 @@ public sealed class OrderGroup
     public Guid OrderId { get; set; }
     public Guid WarehouseId { get; set; }
     public DateTime LastUpdated { get; set; }
-    public OrderState State { get; set; }
+    public OrderStatus Status { get; set; }
     public List<OrderLine> OrderLines { get; set; } = [];
 
-    public void Update( OrderState state )
+    public void Update( OrderStatus status )
     {
-        State = state;
+        Status = status;
         LastUpdated = DateTime.Now;
     }
 

@@ -4,10 +4,10 @@ namespace OrderingInfrastructure.Http;
 
 public interface IHttpService
 {
-    public Task<Reply<T>> TryGetObjRequest<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null );
-    public Task<Reply<T>> TryPostObjRequest<T>( string apiPath, object? body = null, string? authToken = null );
-    public Task<Reply<T>> TryPutObjRequest<T>( string apiPath, object? body = null, string? authToken = null );
-    public Task<Reply<T>> TryDeleteObjRequest<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null );
+    public Task<Reply<T>> TryGet<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null );
+    public Task<Reply<T>> TryPost<T>( string apiPath, object? body = null, string? authToken = null );
+    public Task<Reply<T>> TryPut<T>( string apiPath, object? body = null, string? authToken = null );
+    public Task<Reply<T>> TryDelete<T>( string apiPath, Dictionary<string, object>? parameters = null, string? authToken = null );
 
     public static Dictionary<string, object> QueryParameters( string n1, object o1 ) => new() {
         { n1, o1 }

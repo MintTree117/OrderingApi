@@ -34,11 +34,11 @@ internal sealed class WarehouseOrderingSystem( IWarehouseOrderingRepository ware
             return IReply.NotFound( "OrderGroup not found." );
 
         string email = orderReply.Data.CustomerEmail;
-        var groupUpdate = await HandleGroupUpdate( email, orderGroupsReply.Data, update.OrderGroupId, update.OrderState );
+        var groupUpdate = await HandleGroupUpdate( email, orderGroupsReply.Data, update.OrderGroupId, update.OrderStatus );
         if (!groupUpdate)
             return IReply.Fail( groupUpdate.GetMessage() );
 
-        var orderUpdate = await HandleOrderUpdate( email, orderReply.Data, orderGroupsReply.Data, update.OrderState );
+        var orderUpdate = await HandleOrderUpdate( email, orderReply.Data, orderGroupsReply.Data, update.OrderStatus );
         if (!orderUpdate)
             return IReply.Fail( orderUpdate.GetMessage() );
         
@@ -47,7 +47,7 @@ internal sealed class WarehouseOrderingSystem( IWarehouseOrderingRepository ware
             ? IReply.Success()
             : IReply.ServerError( dbReply.GetMessage() );
     }
-    async Task<Reply<bool>> HandleGroupUpdate( string emailAddress, IEnumerable<OrderGroup> groups, Guid groupId, OrderState state )
+    async Task<Reply<bool>> HandleGroupUpdate( string emailAddress, IEnumerable<OrderGroup> groups, Guid groupId, OrderStatus state )
     {
         OrderGroup? group = groups.FirstOrDefault( g => g.Id == groupId );
         if (group is null)
@@ -56,15 +56,15 @@ internal sealed class WarehouseOrderingSystem( IWarehouseOrderingRepository ware
         string email = OrderingEmailUtility.GenerateOrderGroupUpdateEmail( group, state );
         _emailSender.SendHtmlEmail( emailAddress, "Order Placed", email );
 
-        if (state == OrderState.Delivered)
+        if (state == OrderStatus.Complete)
             await _warehouseRepository.RemoveOrderGroup( group.OrderId, group.Id );
         
         group.Update( state );
         return await _customerRepository.SaveAsync();
     }
-    async Task<Reply<bool>> HandleOrderUpdate( string emailAddress, Order order, IEnumerable<OrderGroup> groups, OrderState state )
+    async Task<Reply<bool>> HandleOrderUpdate( string emailAddress, Order order, IEnumerable<OrderGroup> groups, OrderStatus state )
     {
-        bool same = groups.All( g => g.State == state );
+        bool same = groups.All( g => g.Status == state );
         if (!same)
             return IReply.Success();
         

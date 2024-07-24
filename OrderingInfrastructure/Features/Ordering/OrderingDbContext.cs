@@ -85,7 +85,7 @@ internal sealed class OrderingDbContext( DbContextOptions<OrderingDbContext> opt
             entity.HasKey( static og => og.Id );
             entity.Property( static og => og.LastUpdated )
                 .IsRequired();
-            entity.Property( static og => og.State )
+            entity.Property( static og => og.Status )
                 .IsRequired();
             entity.HasMany( static og => og.OrderLines )
                 .WithOne( static ol => ol.OrderGroup )
