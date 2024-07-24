@@ -16,7 +16,7 @@ WebApplication app = builder.Build();
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
 app.UseHttpsRedirection();
-// app.UseStaticFiles(); // Uncomment if needed
+// app.UseStaticFiles();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseRouting();
