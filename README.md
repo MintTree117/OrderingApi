@@ -1,13 +1,12 @@
 # Ordering API
 
-The Ordering API interacts with the shopping app and the catalog API to manage cart, ordering, and user functionalities.
+The Ordering API interacts with the shopping app and the catalog API to manage billing, cart, ordering, and user functionalities.
 
 ## Features
 
 ### Technologies Used
 
 - .NET 8
-- Web API
 - EF Core
 - In-Memory Database (for cost-effective hosting)
 
@@ -33,7 +32,6 @@ The Ordering API interacts with the shopping app and the catalog API to manage c
 - **Reply Pattern:** Uses a semi-functional immutable data type for return values, handling nullables gracefully and allowing error messages to bubble up.
 - **Error Handling:** Comprehensive error handling with both low-level and global exception catching in middleware and graceful handling using the reply pattern.
 - **Configuration and Environment Variables:** Proper usage throughout the project.
-- **Email Updates:** Uses smtp client to updates user of order updates, and for 2fa, etc
 
 ### Endpoints
 
@@ -66,3 +64,14 @@ The Ordering API interacts with the shopping app and the catalog API to manage c
   - `api/authentication/forgot`
   - `api/authentication/reset`
   - `api/authentication/logout`
+
+- **Cart Management:**
+  - `api/cart/postGet`
+  - `api/cart/clear`
+
+- **Order Management:**
+  - `api/orders/getNew`
+  - `api/orders/place/guest`
+  - `api/orders/place/user`
+  - `api/orders/update`
+  - `api/orders/cancel`
