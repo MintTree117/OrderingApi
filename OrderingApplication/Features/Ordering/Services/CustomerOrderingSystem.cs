@@ -28,11 +28,13 @@ internal sealed class CustomerOrderingSystem(
     
     internal async Task<Reply<bool>> PlaceOrderForGuest( OrderPlacementRequest request )
     {
-        if (string.IsNullOrWhiteSpace( request.EncodedPaymentInfo ))
+        /*if (string.IsNullOrWhiteSpace( request.EncodedPaymentInfo ))
             return IReply.BadRequest( "Invalid payment information." );
 
         var reply = await PlaceOrder( null, request );
-        return reply;
+        return reply;*/
+        await Task.Delay( 1000 );
+        return IReply.BadRequest( "Guest ordering has not been implemented yet... Sorry!" );
     }
     internal async Task<Reply<bool>> PlaceOrderForUser( string? userId, OrderPlacementRequest request )
     {

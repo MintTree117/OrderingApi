@@ -19,7 +19,7 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
         }
         catch ( Exception e )
         {
-            logger.LogError( e, e.Message );
+            Logger.LogError( e, e.Message );
             return ProcessDbException<int>( e );
         }
     }
@@ -38,7 +38,7 @@ internal sealed class SessionRepository( UserDbContext database, ILogger<Session
         }
         catch ( Exception e )
         {
-            logger.LogError( e, e.Message );
+            Logger.LogError( e, e.Message );
             return ProcessDbException<List<UserSession>>( e );
         }
     }

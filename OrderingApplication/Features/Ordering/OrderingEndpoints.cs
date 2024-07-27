@@ -37,6 +37,8 @@ internal static class OrderingEndpoints
 
     static async Task<IResult> GetNewWarehouseOrders( string warehouseToken, HttpContext http, WarehouseOrderingSystem system )
     {
+        // TODO: Implement
+        await Task.Delay( 1000 );
         return Results.Ok();
     }
     static async Task<IResult> PlaceOrderForGuest( OrderPlacementRequest order, CustomerOrderingSystem system )
