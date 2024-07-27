@@ -7,5 +7,4 @@ internal readonly record struct OrderPlacementRequest(
     Contact Contact,
     Address BillingAddress,
     Address ShippingAddress,
-    string? EncodedPaymentInfo,
     List<CartItemDto> Items );

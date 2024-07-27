@@ -55,7 +55,6 @@ internal sealed class CustomerOrderingSystem(
             return IReply.ServerError( catalogReply.GetMessage() );
         }
 
-
         Order order = GenerateOrderModel( userId, request, catalogReply.Data );
 
         var dbReply = await InsertNewOrder( order );
@@ -64,7 +63,6 @@ internal sealed class CustomerOrderingSystem(
             logger.LogError( $"Failed to get insert order into db: {dbReply.GetMessage()}" );
             return dbReply;
         }
-
         
         string body = OrderingEmailUtility.GenerateOrderPlacedEmail( order );
         _emailSender.SendHtmlEmail( order.CustomerEmail, "Order Placed", body );
@@ -122,9 +120,16 @@ internal sealed class CustomerOrderingSystem(
         await Task.WhenAll( dbTasks );
 
         if (!warehouseTask.Result)
+        {
+            logger.LogError( "Failed to InsertNewWarehouseOrderGroups in repo" );
             return IReply.ServerError( warehouseTask.Result.GetMessage() );
+        }
+
         if (!customerTask.Result)
+        {
+            logger.LogError( "Failed to InsertOrder in repo" );
             return IReply.ServerError( customerTask.Result.GetMessage() );
+        }
 
         return IReply.Success();
     }
