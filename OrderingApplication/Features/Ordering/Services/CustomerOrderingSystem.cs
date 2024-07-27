@@ -19,7 +19,7 @@ internal sealed class CustomerOrderingSystem(
     UserManager<UserAccount> userManager, 
     ILogger<CustomerOrderingSystem> logger )
 {
-    readonly string _checkCatalogUrl = config.GetValue<string>( "Ordering:CheckCatalogUrl" ) ?? throw new Exception( "Failed to get CheckCatalogUrl from Configuration." );
+    readonly string _checkCatalogUrl = config["Ordering:CheckCatalogUrl"] ?? throw new Exception( "Failed to get CheckCatalogUrl from Configuration." );
     readonly IHttpService _http = http;
     readonly ICustomerOrderingRepository _customerRepository = customerRepository;
     readonly WarehouseOrderingSystem _warehouseSystem = warehouseSystem;
@@ -50,13 +50,21 @@ internal sealed class CustomerOrderingSystem(
         
         var catalogReply = await _http.TryPost<List<OrderCatalogItem>>( _checkCatalogUrl, catalogDto );
         if (!catalogReply)
+        {
+            logger.LogError( $"Failed to get catalog api response: {catalogReply.GetMessage()}" );
             return IReply.ServerError( catalogReply.GetMessage() );
+        }
+
 
         Order order = GenerateOrderModel( userId, request, catalogReply.Data );
 
         var dbReply = await InsertNewOrder( order );
         if (!dbReply)
+        {
+            logger.LogError( $"Failed to get insert order into db: {dbReply.GetMessage()}" );
             return dbReply;
+        }
+
         
         string body = OrderingEmailUtility.GenerateOrderPlacedEmail( order );
         _emailSender.SendHtmlEmail( order.CustomerEmail, "Order Placed", body );
