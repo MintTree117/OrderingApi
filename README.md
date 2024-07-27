@@ -33,6 +33,7 @@ The Ordering API interacts with the shopping app and the catalog API to manage c
 - **Reply Pattern:** Uses a semi-functional immutable data type for return values, handling nullables gracefully and allowing error messages to bubble up.
 - **Error Handling:** Comprehensive error handling with both low-level and global exception catching in middleware and graceful handling using the reply pattern.
 - **Configuration and Environment Variables:** Proper usage throughout the project.
+- **Email Updates:** Uses smtp client to updates user of order updates, and for 2fa, etc
 
 ### Endpoints
 
