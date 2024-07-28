@@ -1,11 +1,8 @@
 # Ordering API
 
-The Ordering API interacts with 2 the shopping app and the catalog API to manage billing, cart, ordering, and user functionalities.
+This api interacts with 2 other repositories, the [ShoppingApp](https://github.com/MintTree117/ShoppingApp.git) and [CatalogApi](https://github.com/MintTree117/CatalogApi.git), to manage billing, cart, ordering, and user functionalities.
 
-1. [ShoppingApp](https://github.com/MintTree117/ShoppingApp.git)
-2. [CatalogApi](https://github.com/MintTree117/CatalogApi.git)
-
-See the hosted application [here](https://happy-bush-0b0f3e80f.5.azurestaticapps.net/)
+See the fully deployed application [here](https://happy-bush-0b0f3e80f.5.azurestaticapps.net/)
 
 ## Features
 
