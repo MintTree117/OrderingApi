@@ -2,7 +2,7 @@
 
 This api interacts with 2 other repositories, the [ShoppingApp](https://github.com/MintTree117/ShoppingApp.git) and [CatalogApi](https://github.com/MintTree117/CatalogApi.git), to manage billing, cart, ordering, and user functionalities.
 
-See the fully deployed application [here](https://happy-bush-0b0f3e80f.5.azurestaticapps.net/)
+See the fully deployed application [here](https://happy-bush-0b0f3e80f.5.azurestaticapps.net/).
 
 ## Features
 
